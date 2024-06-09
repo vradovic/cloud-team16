@@ -4,6 +4,7 @@ Nikola Mitrović SV18/2021<br>
 Vladislav Radović SV27/2021 <br><br><br>
 # Dijagram cloud native arhitekture  <br><br>
 
-![CloudNative_final](https://github.com/vradovic/cloud-team16/assets/105147473/c9ac6c2b-b773-4ab8-ad25-0f0267b31ab0)
+![CloudNative16](https://github.com/vradovic/cloud-team16/assets/105147473/662f22e0-9642-4307-98b6-437031cd1532)
+
 
 
