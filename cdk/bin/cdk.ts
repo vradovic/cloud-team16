@@ -3,6 +3,7 @@ import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
 import { CdkStack } from '../lib/cdk-stack';
 import { AuthStack } from '../lib/auth-stack';
+import { ApiStack } from '../lib/api-stack';
 
 const app = new cdk.App();
 new CdkStack(app, 'CdkStack', {
@@ -19,3 +20,4 @@ new CdkStack(app, 'CdkStack', {
 });
 
 new AuthStack(app, 'AuthStack');
+new ApiStack(app, 'ApiStack');
