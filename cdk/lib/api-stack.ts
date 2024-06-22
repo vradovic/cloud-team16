@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Code } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
+import path from 'path';
 
 export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -9,7 +10,7 @@ export class ApiStack extends cdk.Stack {
 
     new NodejsFunction(this, 'createContentFunction', {
       handler: 'create-content.handler',
-      code: Code.fromAsset('lambda'),
+      code: Code.fromAsset(path.join(__dirname, 'lambda')),
     });
   }
 }
