@@ -4,6 +4,7 @@ import * as cdk from 'aws-cdk-lib';
 import { CdkStack } from '../lib/cdk-stack';
 import { AuthStack } from '../lib/auth-stack';
 import { ApiStack } from '../lib/api-stack';
+import { StorageStack } from '../lib/storage-stack';
 
 const app = new cdk.App();
 new CdkStack(app, 'CdkStack', {
@@ -20,4 +21,10 @@ new CdkStack(app, 'CdkStack', {
 });
 
 new AuthStack(app, 'AuthStack');
-new ApiStack(app, 'ApiStack');
+
+const storageStack = new StorageStack(app, 'StorageStack');
+
+new ApiStack(app, 'ApiStack', {
+  contentBucket: storageStack.contentBucket,
+  contentMetadataTable: storageStack.contentMetadataTable,
+});
