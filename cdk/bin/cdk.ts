@@ -20,11 +20,12 @@ new CdkStack(app, 'CdkStack', {
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
 
-new AuthStack(app, 'AuthStack');
+const authStack = new AuthStack(app, 'AuthStack');
 
 const storageStack = new StorageStack(app, 'StorageStack');
 
 new ApiStack(app, 'ApiStack', {
   contentBucket: storageStack.contentBucket,
   contentMetadataTable: storageStack.contentMetadataTable,
+  userPool: authStack.userPool,
 });

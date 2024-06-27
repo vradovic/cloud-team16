@@ -1,9 +1,12 @@
 import * as cdk from 'aws-cdk-lib';
 import {
+  AuthorizationType,
   AwsIntegration,
+  CognitoUserPoolsAuthorizer,
   ContentHandling,
   RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
+import { IUserPool } from 'aws-cdk-lib/aws-cognito';
 import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
 import { Code } from 'aws-cdk-lib/aws-lambda';
@@ -15,6 +18,7 @@ import path from 'path';
 export interface ApiStackProps {
   contentBucket: IBucket;
   contentMetadataTable: ITable;
+  userPool: IUserPool;
 }
 
 export class ApiStack extends cdk.Stack {
@@ -33,6 +37,10 @@ export class ApiStack extends cdk.Stack {
 
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],
+    });
+
+    const auth = new CognitoUserPoolsAuthorizer(this, 'srbflixAuthorizer', {
+      cognitoUserPools: [props.userPool],
     });
 
     const getIntegration = new AwsIntegration({
@@ -62,7 +70,7 @@ export class ApiStack extends cdk.Stack {
       },
     });
 
-    const bucketResource = api.root.addResource(props.contentBucket.bucketName);
+    const bucketResource = api.root.addResource('media');
     const objectResource = bucketResource.addResource('{object}');
 
     objectResource.addMethod('GET', getIntegration, {
@@ -77,6 +85,8 @@ export class ApiStack extends cdk.Stack {
           },
         },
       ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
     });
   }
 }
