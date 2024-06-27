@@ -70,7 +70,7 @@ export class ApiStack extends cdk.Stack {
       },
     });
 
-    const bucketResource = api.root.addResource(props.contentBucket.bucketName);
+    const bucketResource = api.root.addResource('media');
     const objectResource = bucketResource.addResource('{object}');
 
     objectResource.addMethod('GET', getIntegration, {
