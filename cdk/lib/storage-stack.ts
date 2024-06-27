@@ -3,9 +3,7 @@ import {
   AttributeType,
   Billing,
   Capacity,
-  ITable,
   ITableV2,
-  Table,
   TableV2,
 } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
@@ -30,7 +28,7 @@ export class StorageStack extends cdk.Stack {
         name: 'name',
         type: AttributeType.STRING,
       },
-    })
+    });
 
     this.subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
       partitionKey: {
