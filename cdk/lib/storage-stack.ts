@@ -1,11 +1,5 @@
 import * as cdk from 'aws-cdk-lib';
-import {
-  AttributeType,
-  Billing,
-  Capacity,
-  ITableV2,
-  TableV2,
-} from 'aws-cdk-lib/aws-dynamodb';
+import { AttributeType, ITableV2, TableV2 } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
@@ -39,10 +33,6 @@ export class StorageStack extends cdk.Stack {
         name: 'username',
         type: AttributeType.STRING,
       },
-      billing: Billing.provisioned({
-        readCapacity: Capacity.fixed(1),
-        writeCapacity: Capacity.fixed(1),
-      }),
     });
   }
 }

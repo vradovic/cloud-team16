@@ -4,12 +4,13 @@ import {
   AwsIntegration,
   CognitoUserPoolsAuthorizer,
   ContentHandling,
+  LambdaIntegration,
   RestApi,
 } from 'aws-cdk-lib/aws-apigateway';
 import { IUserPool } from 'aws-cdk-lib/aws-cognito';
-import { ITable } from 'aws-cdk-lib/aws-dynamodb';
+import { ITableV2 } from 'aws-cdk-lib/aws-dynamodb';
 import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
-import { Code } from 'aws-cdk-lib/aws-lambda';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { IBucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
@@ -17,7 +18,8 @@ import path from 'path';
 
 export interface ApiStackProps {
   contentBucket: IBucket;
-  contentMetadataTable: ITable;
+  contentMetadataTable: ITableV2;
+  subscriptionsTable: ITableV2;
   userPool: IUserPool;
 }
 
@@ -29,11 +31,27 @@ export class ApiStack extends cdk.Stack {
       this,
       'createContentFunction',
       {
-        handler: 'create-content.handler',
-        code: Code.fromAsset(path.join(__dirname, 'lambda')),
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/create-content.ts'),
+        handler: 'handler',
       },
     );
     props.contentMetadataTable.grantWriteData(createContentFunction);
+
+    const createSubscriptionFunction = new NodejsFunction(
+      this,
+      'createSubscriptionFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/create-subscription.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.subscriptionsTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+    props.subscriptionsTable.grantWriteData(createSubscriptionFunction);
 
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],
@@ -42,6 +60,13 @@ export class ApiStack extends cdk.Stack {
     const auth = new CognitoUserPoolsAuthorizer(this, 'srbflixAuthorizer', {
       cognitoUserPools: [props.userPool],
     });
+
+    const createSubscriptionIntegration = new LambdaIntegration(
+      createSubscriptionFunction,
+    );
+
+    const subscriptionResource = api.root.addResource('subscriptions');
+    subscriptionResource.addMethod('POST', createSubscriptionIntegration);
 
     const getIntegration = new AwsIntegration({
       service: 's3',

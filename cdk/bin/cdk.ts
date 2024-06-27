@@ -14,5 +14,6 @@ const storageStack = new StorageStack(app, 'StorageStack');
 new ApiStack(app, 'ApiStack', {
   contentBucket: storageStack.contentBucket,
   contentMetadataTable: storageStack.contentMetadataTable,
+  subscriptionsTable: storageStack.subscriptionsTable,
   userPool: authStack.userPool,
 });
