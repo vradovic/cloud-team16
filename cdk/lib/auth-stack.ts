@@ -3,10 +3,12 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
 export class AuthStack extends cdk.Stack {
+  public readonly userPool: cognito.IUserPool;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const pool = new cognito.UserPool(this, 'srbflixUserPool', {
+    this.userPool = new cognito.UserPool(this, 'srbflixUserPool', {
       selfSignUpEnabled: true,
       signInAliases: {
         username: true,
@@ -28,13 +30,13 @@ export class AuthStack extends cdk.Stack {
       },
     });
 
-    pool.addDomain('srbflixDomain', {
+    this.userPool.addDomain('srbflixDomain', {
       cognitoDomain: {
         domainPrefix: 'srbflix-auth',
       },
     });
 
-    pool.addClient('srbflixClient', {
+    this.userPool.addClient('srbflixClient', {
       authFlows: {
         userPassword: true,
         userSrp: true,
