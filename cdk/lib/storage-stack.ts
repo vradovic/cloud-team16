@@ -32,11 +32,11 @@ export class StorageStack extends cdk.Stack {
 
     this.subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
       partitionKey: {
-        name: 'type',
+        name: 'topic',
         type: AttributeType.STRING,
       },
       sortKey: {
-        name: 'name',
+        name: 'username',
         type: AttributeType.STRING,
       },
       billing: Billing.provisioned({
