@@ -8,7 +8,6 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
 interface IBody {
   topic?: string;
-  username?: string;
 }
 
 const REGION = process.env.REGION!;
@@ -28,7 +27,10 @@ export const handler = async (
       };
     }
 
-    const { topic, username } = JSON.parse(event.body) as IBody;
+    const { topic } = JSON.parse(event.body) as IBody;
+    const username =
+      event.requestContext.authorizer?.claims['cognito:username'];
+
     if (!topic || !username) {
       return {
         statusCode: 400,

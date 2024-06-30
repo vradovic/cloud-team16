@@ -66,7 +66,10 @@ export class ApiStack extends cdk.Stack {
     );
 
     const subscriptionResource = api.root.addResource('subscriptions');
-    subscriptionResource.addMethod('POST', createSubscriptionIntegration);
+    subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
 
     const getIntegration = new AwsIntegration({
       service: 's3',
