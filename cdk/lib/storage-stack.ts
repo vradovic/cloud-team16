@@ -1,5 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
-import { AttributeType, ITableV2, TableV2 } from 'aws-cdk-lib/aws-dynamodb';
+import {
+  AttributeType,
+  ITableV2,
+  ProjectionType,
+  TableV2,
+} from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
@@ -24,7 +29,7 @@ export class StorageStack extends cdk.Stack {
       },
     });
 
-    this.subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
+    const subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
       partitionKey: {
         name: 'topic',
         type: AttributeType.STRING,
@@ -34,5 +39,18 @@ export class StorageStack extends cdk.Stack {
         type: AttributeType.STRING,
       },
     });
+    subscriptionsTable.addGlobalSecondaryIndex({
+      indexName: 'usernameIndex',
+      partitionKey: {
+        name: 'username',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'topic',
+        type: AttributeType.STRING,
+      },
+      projectionType: ProjectionType.ALL,
+    });
+    this.subscriptionsTable = subscriptionsTable;
   }
 }

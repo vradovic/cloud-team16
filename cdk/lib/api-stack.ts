@@ -68,6 +68,22 @@ export class ApiStack extends cdk.Stack {
     );
     props.subscriptionsTable.grantWriteData(deleteSubscriptionFunction);
 
+    const getUserSubscriptionsFunction = new NodejsFunction(
+      this,
+      'getUserSubscriptionsFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/get-user-subscriptions.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.subscriptionsTable.tableName,
+          REGION: this.region,
+          INDEX_NAME: 'usernameIndex',
+        },
+      },
+    );
+    props.subscriptionsTable.grantReadData(getUserSubscriptionsFunction);
+
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],
     });
@@ -84,12 +100,22 @@ export class ApiStack extends cdk.Stack {
       deleteSubscriptionFunction,
     );
 
+    const getUserSubscriptionsIntegration = new LambdaIntegration(
+      getUserSubscriptionsFunction,
+    );
+
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
+
     subscriptionResource.addMethod('DELETE', deleteSubscriptionIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    subscriptionResource.addMethod('GET', getUserSubscriptionsIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
