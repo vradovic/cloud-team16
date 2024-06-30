@@ -31,7 +31,7 @@ export class StorageStack extends cdk.Stack {
       },
       billing: Billing.provisioned({
         readCapacity: Capacity.fixed(1),
-        writeCapacity: Capacity.autoscaled({ maxCapacity: 1, seedCapacity: 1 }),
+        writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
       }),
     });
 
@@ -46,7 +46,7 @@ export class StorageStack extends cdk.Stack {
       },
       billing: Billing.provisioned({
         readCapacity: Capacity.fixed(1),
-        writeCapacity: Capacity.autoscaled({ maxCapacity: 1, seedCapacity: 1 }),
+        writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
       }),
     });
     subscriptionsTable.addGlobalSecondaryIndex({
