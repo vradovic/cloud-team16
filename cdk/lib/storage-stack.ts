@@ -1,6 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import {
   AttributeType,
+  Billing,
+  Capacity,
   ITableV2,
   ProjectionType,
   TableV2,
@@ -27,6 +29,10 @@ export class StorageStack extends cdk.Stack {
         name: 'name',
         type: AttributeType.STRING,
       },
+      billing: Billing.provisioned({
+        readCapacity: Capacity.fixed(1),
+        writeCapacity: Capacity.autoscaled({ maxCapacity: 1, seedCapacity: 1 }),
+      }),
     });
 
     const subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
@@ -38,6 +44,10 @@ export class StorageStack extends cdk.Stack {
         name: 'username',
         type: AttributeType.STRING,
       },
+      billing: Billing.provisioned({
+        readCapacity: Capacity.fixed(1),
+        writeCapacity: Capacity.autoscaled({ maxCapacity: 1, seedCapacity: 1 }),
+      }),
     });
     subscriptionsTable.addGlobalSecondaryIndex({
       indexName: 'usernameIndex',
