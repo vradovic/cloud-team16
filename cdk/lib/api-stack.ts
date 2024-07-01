@@ -115,6 +115,17 @@ export class ApiStack extends cdk.Stack {
     );
     props.ratingTable.grantWriteData(deleteRatingFunction);
 
+    const getRatingFunction = new NodejsFunction(this, 'getRatingFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, './lambda/get-rating.ts'),
+      handler: 'handler',
+      environment: {
+        REGION: this.region,
+        TABLE_NAME: props.ratingTable.tableName,
+      },
+    });
+    props.ratingTable.grantReadData(getRatingFunction);
+
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],
     });
@@ -138,6 +149,8 @@ export class ApiStack extends cdk.Stack {
     const createRatingIntegration = new LambdaIntegration(createRatingFunction);
 
     const deleteRatingIntegration = new LambdaIntegration(deleteRatingFunction);
+
+    const getRatingIntegration = new LambdaIntegration(getRatingFunction);
 
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
@@ -166,6 +179,11 @@ export class ApiStack extends cdk.Stack {
     });
 
     ratingResource.addMethod('DELETE', deleteRatingIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    ratingResource.addMethod('GET', getRatingIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
