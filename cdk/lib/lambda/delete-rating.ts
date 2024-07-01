@@ -36,7 +36,7 @@ export const handler = async (
     TableName: TABLE_NAME,
     Key: {
       username,
-      movieId,
+      movie_id: movieId,
     },
   };
 
