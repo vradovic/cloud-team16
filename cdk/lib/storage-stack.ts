@@ -14,6 +14,7 @@ export class StorageStack extends cdk.Stack {
   public readonly contentBucket: IBucket;
   public readonly contentMetadataTable: ITableV2;
   public readonly subscriptionsTable: ITableV2;
+  public readonly ratingTable: ITableV2;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -62,5 +63,20 @@ export class StorageStack extends cdk.Stack {
       projectionType: ProjectionType.ALL,
     });
     this.subscriptionsTable = subscriptionsTable;
+
+    this.ratingTable = new TableV2(this, 'ratingTable', {
+      partitionKey: {
+        name: 'username',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'movie_id',
+        type: AttributeType.STRING,
+      },
+      billing: Billing.provisioned({
+        readCapacity: Capacity.fixed(1),
+        writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
+      }),
+    });
   }
 }

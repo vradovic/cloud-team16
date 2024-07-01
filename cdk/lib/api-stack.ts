@@ -21,6 +21,7 @@ export interface ApiStackProps {
   contentMetadataTable: ITableV2;
   subscriptionsTable: ITableV2;
   userPool: IUserPool;
+  ratingTable: ITableV2;
 }
 
 export class ApiStack extends cdk.Stack {
@@ -84,6 +85,47 @@ export class ApiStack extends cdk.Stack {
     );
     props.subscriptionsTable.grantReadData(getUserSubscriptionsFunction);
 
+    const createRatingFunction = new NodejsFunction(
+      this,
+      'createRatingFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/create-rating.ts'),
+        handler: 'handler',
+        environment: {
+          REGION: this.region,
+          TABLE_NAME: props.ratingTable.tableName,
+        },
+      },
+    );
+    props.ratingTable.grantWriteData(createRatingFunction);
+
+    const deleteRatingFunction = new NodejsFunction(
+      this,
+      'deleteRatingFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/delete-rating.ts'),
+        handler: 'handler',
+        environment: {
+          REGION: this.region,
+          TABLE_NAME: props.ratingTable.tableName,
+        },
+      },
+    );
+    props.ratingTable.grantWriteData(deleteRatingFunction);
+
+    const getRatingFunction = new NodejsFunction(this, 'getRatingFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, './lambda/get-rating.ts'),
+      handler: 'handler',
+      environment: {
+        REGION: this.region,
+        TABLE_NAME: props.ratingTable.tableName,
+      },
+    });
+    props.ratingTable.grantReadData(getRatingFunction);
+
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],
     });
@@ -104,6 +146,12 @@ export class ApiStack extends cdk.Stack {
       getUserSubscriptionsFunction,
     );
 
+    const createRatingIntegration = new LambdaIntegration(createRatingFunction);
+
+    const deleteRatingIntegration = new LambdaIntegration(deleteRatingFunction);
+
+    const getRatingIntegration = new LambdaIntegration(getRatingFunction);
+
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
       authorizer: auth,
@@ -120,10 +168,30 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
+    const mediaResource = api.root.addResource('media');
+    const mediaId = mediaResource.addResource('{movieId}');
+    const ratingResource = mediaId.addResource('rating');
+    const contentResource = mediaId.addResource('content');
+
+    ratingResource.addMethod('POST', createRatingIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    ratingResource.addMethod('DELETE', deleteRatingIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    ratingResource.addMethod('GET', getRatingIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
     const getIntegration = new AwsIntegration({
       service: 's3',
       integrationHttpMethod: 'GET',
-      path: `${props.contentBucket.bucketName}/{object}`,
+      path: `${props.contentBucket.bucketName}/{movieId}`,
       options: {
         credentialsRole: new Role(this, 'ApiGatewayS3Role', {
           assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
@@ -132,7 +200,7 @@ export class ApiStack extends cdk.Stack {
           ],
         }),
         requestParameters: {
-          'integration.request.path.object': 'method.request.path.object',
+          'integration.request.path.movieId': 'method.request.path.movieId',
         },
         integrationResponses: [
           {
@@ -147,12 +215,9 @@ export class ApiStack extends cdk.Stack {
       },
     });
 
-    const bucketResource = api.root.addResource('media');
-    const objectResource = bucketResource.addResource('{object}');
-
-    objectResource.addMethod('GET', getIntegration, {
+    contentResource.addMethod('GET', getIntegration, {
       requestParameters: {
-        'method.request.path.object': true,
+        'method.request.path.movieId': true,
       },
       methodResponses: [
         {
