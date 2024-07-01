@@ -44,11 +44,18 @@ export const handler = async (
   try {
     item = await docClient.send(new GetCommand(params));
   } catch (error) {
-    console.error('Error deleting item: ', error);
+    console.error('Error getting item: ', error);
 
     return {
       statusCode: 500,
       body: 'Internal server error',
+    };
+  }
+
+  if (!item.Item) {
+    return {
+      statusCode: 404,
+      body: 'Rating not found',
     };
   }
 
