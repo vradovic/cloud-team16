@@ -16,4 +16,5 @@ new ApiStack(app, 'ApiStack', {
   contentMetadataTable: storageStack.contentMetadataTable,
   subscriptionsTable: storageStack.subscriptionsTable,
   userPool: authStack.userPool,
+  ratingTable: storageStack.ratingTable,
 });
