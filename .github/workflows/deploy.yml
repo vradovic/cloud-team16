@@ -31,5 +31,7 @@ jobs:
           role-to-assume: arn:aws:iam::590183779262:role/gh-actions-role
           role-session-name: deploy-session
       - run: npm ci
-      - name: Build and deploy
+      - name: Build app
+        run: npm run build
+      - name: Deploy app
         run: npm run deploy
