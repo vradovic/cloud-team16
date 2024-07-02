@@ -14,6 +14,9 @@ export class AuthStack extends cdk.Stack {
         username: true,
         email: true,
       },
+      autoVerify: {
+        email: true,
+      },
       standardAttributes: {
         email: {
           required: true,
