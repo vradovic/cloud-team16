@@ -102,4 +102,25 @@ export class CognitoService {
       });
     });
   }
+
+  async getSession() {
+    const currentUser = this.userPool.getCurrentUser();
+    if (currentUser) {
+      return new Promise<CognitoUserSession>((resolve, reject) => {
+        currentUser.getSession(
+          (error: Error | null, session: CognitoUserSession | null) => {
+            if (error) {
+              reject(error);
+            } else if (session) {
+              resolve(session);
+            } else {
+              console.error('Session is null');
+            }
+          },
+        );
+      });
+    } else {
+      return null;
+    }
+  }
 }
