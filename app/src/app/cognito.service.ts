@@ -8,6 +8,7 @@ import {
   ICognitoUserData,
   ISignUpResult,
 } from 'amazon-cognito-identity-js';
+import { environment } from '../environments/environment.development';
 
 @Injectable({
   providedIn: 'root',
@@ -17,8 +18,8 @@ export class CognitoService {
 
   constructor() {
     this.userPool = new CognitoUserPool({
-      UserPoolId: process.env.USER_POOL_ID!,
-      ClientId: process.env.CLIENT_ID!,
+      UserPoolId: environment.userPoolId,
+      ClientId: environment.clientId,
     });
   }
 
