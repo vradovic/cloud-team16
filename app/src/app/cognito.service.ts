@@ -82,4 +82,24 @@ export class CognitoService {
       cognitoUser.signOut();
     }
   }
+
+  verifyUser(username: string, code: string) {
+    const userData: ICognitoUserData = {
+      Username: username,
+      Pool: this.userPool,
+    };
+
+    const cognitoUser = new CognitoUser(userData);
+
+    return new Promise((resolve, reject) => {
+      cognitoUser.confirmRegistration(code, true, (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(result);
+      });
+    });
+  }
 }
