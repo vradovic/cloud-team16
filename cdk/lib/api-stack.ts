@@ -35,9 +35,12 @@ export class ApiStack extends cdk.Stack {
         runtime: Runtime.NODEJS_20_X,
         entry: path.join(__dirname, './lambda/create-content.ts'),
         handler: 'handler',
+        environment: {
+          BUCKET_NAME: props.contentBucket.bucketName,
+        },
       },
     );
-    props.contentMetadataTable.grantWriteData(createContentFunction);
+    props.contentBucket.grantPut(createContentFunction);
 
     const createSubscriptionFunction = new NodejsFunction(
       this,
@@ -127,7 +130,7 @@ export class ApiStack extends cdk.Stack {
     props.ratingTable.grantReadData(getRatingFunction);
 
     const api = new RestApi(this, 'srbflixApi', {
-      binaryMediaTypes: ['video/*'],
+      binaryMediaTypes: ['*/*'],
     });
 
     const auth = new CognitoUserPoolsAuthorizer(this, 'srbflixAuthorizer', {
@@ -151,6 +154,13 @@ export class ApiStack extends cdk.Stack {
     const deleteRatingIntegration = new LambdaIntegration(deleteRatingFunction);
 
     const getRatingIntegration = new LambdaIntegration(getRatingFunction);
+
+    const createContentFunctionIntegration = new LambdaIntegration(
+      createContentFunction,
+      {
+        proxy: true,
+      },
+    );
 
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
@@ -227,6 +237,14 @@ export class ApiStack extends cdk.Stack {
           },
         },
       ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    mediaResource.addMethod('POST', createContentFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': false,
+      },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });

@@ -1,37 +1,41 @@
-import { PutItemCommand, DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { S3 } from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
-export const handler = async (
-  event: APIGatewayEvent,
-): Promise<APIGatewayProxyResult> => {
-  const dynamodb_client = new DynamoDBClient({ region: 'eu-central-1' });
+const s3 = new S3();
+const bucketName = process.env.BUCKET_NAME!;
 
-  if (!event.body) {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  try {
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: 'No file uploaded' }),
+      };
+    }
+
+    const fileBuffer = Buffer.from(event.body, 'base64');
+    const fileKey = uuidv4();
+    const fileName = `${fileKey}.mp4`;
+
+    const params = {
+      Bucket: bucketName,
+      Key: fileName,
+      Body: fileBuffer,
+      ContentType: 'video/mp4',
+    };
+
+    await s3.upload(params).promise();
+
     return {
-      statusCode: 400,
-      body: 'Missing metadata',
+      statusCode: 200,
+      body: JSON.stringify({ message: 'File uploaded successfully', fileName }),
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: 'Error uploading file' }),
     };
   }
-  const data = JSON.parse(event.body);
-
-  const params = {
-    TableName: 'ContentMetadata',
-    Item: {
-      Id: { S: data.Id },
-      ContentTitle: { S: data.ContentTitle },
-      Description: { S: data.Description },
-      Actors: { L: data.Actors.map((actor: string) => ({ S: actor })) },
-      Directors: {
-        L: data.Directors.map((director: string) => ({ S: director })),
-      },
-      Genres: { L: data.Genres.map((genre: string) => ({ S: genre })) },
-    },
-  };
-
-  await dynamodb_client.send(new PutItemCommand(params));
-  return {
-    statusCode: 201,
-    headers: {},
-    body: 'Uploaded to db',
-  };
 };
