@@ -9,7 +9,13 @@ import {
 } from 'aws-cdk-lib/aws-apigateway';
 import { IUserPool } from 'aws-cdk-lib/aws-cognito';
 import { ITableV2 } from 'aws-cdk-lib/aws-dynamodb';
-import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import {
+  ManagedPolicy,
+  PolicyDocument,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { IBucket } from 'aws-cdk-lib/aws-s3';
@@ -238,9 +244,16 @@ export class ApiStack extends cdk.Stack {
       options: {
         credentialsRole: new Role(this, 'ApiGatewayS3RoleUpload', {
           assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
-          managedPolicies: [
-            ManagedPolicy.fromAwsManagedPolicyName('AmazonS3WriteOnlyAccess'),
-          ],
+          inlinePolicies: {
+            S3UploadPolicy: new PolicyDocument({
+              statements: [
+                new PolicyStatement({
+                  actions: ['s3:PutObject'],
+                  resources: [`${props.contentBucket.bucketArn}/*`],
+                }),
+              ],
+            }),
+          },
         }),
         requestParameters: {
           'integration.request.path.movieId': 'method.request.path.movieId',
