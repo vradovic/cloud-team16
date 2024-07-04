@@ -28,20 +28,6 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id);
 
-    const createContentFunction = new NodejsFunction(
-      this,
-      'createContentFunction',
-      {
-        runtime: Runtime.NODEJS_20_X,
-        entry: path.join(__dirname, './lambda/create-content.ts'),
-        handler: 'handler',
-        environment: {
-          BUCKET_NAME: props.contentBucket.bucketName,
-        },
-      },
-    );
-    props.contentBucket.grantPut(createContentFunction);
-
     const uploadMetadataFunction = new NodejsFunction(
       this,
       'uploadMetadataFunction',
@@ -175,13 +161,6 @@ export class ApiStack extends cdk.Stack {
 
     const getRatingIntegration = new LambdaIntegration(getRatingFunction);
 
-    const createContentFunctionIntegration = new LambdaIntegration(
-      createContentFunction,
-      {
-        proxy: true,
-      },
-    );
-
     const uploadMetadataFunctionIntegration = new LambdaIntegration(
       uploadMetadataFunction,
       {
@@ -302,14 +281,6 @@ export class ApiStack extends cdk.Stack {
           statusCode: '201',
         },
       ],
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
-    });
-
-    mediaResource.addMethod('POST', createContentFunctionIntegration, {
-      requestParameters: {
-        'method.request.path.movieId': false,
-      },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
