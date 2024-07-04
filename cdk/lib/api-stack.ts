@@ -252,6 +252,30 @@ export class ApiStack extends cdk.Stack {
       },
     });
 
+    const uploadIntegration = new AwsIntegration({
+      service: 's3',
+      integrationHttpMethod: 'PUT',
+      path: `${props.contentBucket.bucketName}/{movieId}`,
+      options: {
+        credentialsRole: new Role(this, 'ApiGatewayS3RoleUpload', {
+          assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
+          managedPolicies: [
+            ManagedPolicy.fromAwsManagedPolicyName('AmazonS3WriteOnlyAccess'),
+          ],
+        }),
+        requestParameters: {
+          'integration.request.path.movieId': 'method.request.path.movieId',
+          'integration.request.header.Content-Type':
+            'method.request.header.Content-Type',
+        },
+        integrationResponses: [
+          {
+            statusCode: '201',
+          },
+        ],
+      },
+    });
+
     contentResource.addMethod('GET', getIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
@@ -262,6 +286,20 @@ export class ApiStack extends cdk.Stack {
           responseParameters: {
             'method.response.header.Content-Type': true,
           },
+        },
+      ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    contentResource.addMethod('POST', uploadIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': true,
+      },
+      methodResponses: [
+        {
+          statusCode: '201',
         },
       ],
       authorizer: auth,
