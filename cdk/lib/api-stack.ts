@@ -50,12 +50,12 @@ export class ApiStack extends cdk.Stack {
         entry: path.join(__dirname, './lambda/upload-metadata.ts'),
         handler: 'handler',
         environment: {
-          TABLE_NAME: props.contentMetadataTable?.tableName,
-          // TITLE_INDEX: 'titleIndex',
-          // GENRE_INDEX: 'genreIndex',
-          // DIRECTOR_INDEX: 'directorIndex',
-          // ACTOR_INDEX: 'actorIndex',
-          // RELEASE_YEAR_INDEX: 'releaseYearIndex',
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          TITLE_INDEX: 'titleIndex',
+          GENRE_INDEX: 'genreIndex',
+          DIRECTOR_INDEX: 'directorIndex',
+          ACTOR_INDEX: 'actorIndex',
+          RELEASE_YEAR_INDEX: 'releaseYearIndex',
         },
       },
     );

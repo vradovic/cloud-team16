@@ -9,7 +9,7 @@ import {
 } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 export class StorageStack extends cdk.Stack {
   public readonly contentBucket: IBucket;
@@ -36,31 +36,35 @@ export class StorageStack extends cdk.Stack {
         writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
       }),
     });
+    this.contentMetadataTable = contentMetadataTable;
 
-    // contentMetadataTable.addGlobalSecondaryIndex({
-    //   indexName: 'titleIndex',
-    //   partitionKey: {name: 'title', type: dynamodb.AttributeType.STRING},
-    // });
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'titleIndex',
+      partitionKey: { name: 'title', type: dynamodb.AttributeType.STRING },
+    });
 
-    // contentMetadataTable.addGlobalSecondaryIndex({
-    //   indexName: 'genreIndex',
-    //   partitionKey: {name: 'genre', type: dynamodb.AttributeType.STRING},
-    // });
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'genreIndex',
+      partitionKey: { name: 'genre', type: dynamodb.AttributeType.STRING },
+    });
 
-    // contentMetadataTable.addGlobalSecondaryIndex({
-    //   indexName: 'directorIndex',
-    //   partitionKey: {name: 'director', type: dynamodb.AttributeType.STRING},
-    // });
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'directorIndex',
+      partitionKey: { name: 'director', type: dynamodb.AttributeType.STRING },
+    });
 
-    // contentMetadataTable.addGlobalSecondaryIndex({
-    //   indexName: 'actorIndex',
-    //   partitionKey: {name: 'actor', type: dynamodb.AttributeType.STRING},
-    // });
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'actorIndex',
+      partitionKey: { name: 'actor', type: dynamodb.AttributeType.STRING },
+    });
 
-    // contentMetadataTable.addGlobalSecondaryIndex({
-    //   indexName: 'releaseYearIndex',
-    //   partitionKey: {name: 'releaseYear', type: dynamodb.AttributeType.NUMBER},
-    // });
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'releaseYearIndex',
+      partitionKey: {
+        name: 'releaseYear',
+        type: dynamodb.AttributeType.NUMBER,
+      },
+    });
 
     const subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
       partitionKey: {
