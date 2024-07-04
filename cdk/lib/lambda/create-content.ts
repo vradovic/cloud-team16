@@ -1,8 +1,9 @@
-import { S3 } from 'aws-sdk';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
-const s3 = new S3();
+const region = process.env.REGION!;
+const s3 = new S3Client({ region: region });
 const bucketName = process.env.BUCKET_NAME!;
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -25,7 +26,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       ContentType: 'video/mp4',
     };
 
-    await s3.upload(params).promise();
+    await s3.send(new PutObjectCommand(params));
 
     return {
       statusCode: 200,

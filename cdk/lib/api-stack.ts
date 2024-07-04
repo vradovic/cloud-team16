@@ -37,6 +37,7 @@ export class ApiStack extends cdk.Stack {
         handler: 'handler',
         environment: {
           BUCKET_NAME: props.contentBucket.bucketName,
+          REGION: this.region,
         },
       },
     );
