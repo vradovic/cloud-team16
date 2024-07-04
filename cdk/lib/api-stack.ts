@@ -50,17 +50,34 @@ export class ApiStack extends cdk.Stack {
         entry: path.join(__dirname, './lambda/upload-metadata.ts'),
         handler: 'handler',
         environment: {
-          TABLE_NAME: props.contentMetadataTable?.tableName,
-          // TITLE_INDEX: 'titleIndex',
-          // GENRE_INDEX: 'genreIndex',
-          // DIRECTOR_INDEX: 'directorIndex',
-          // ACTOR_INDEX: 'actorIndex',
-          // RELEASE_YEAR_INDEX: 'releaseYearIndex',
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          TITLE_INDEX: 'titleIndex',
+          GENRE_INDEX: 'genreIndex',
+          DIRECTOR_INDEX: 'directorIndex',
+          ACTOR_INDEX: 'actorIndex',
+          RELEASE_YEAR_INDEX: 'releaseYearIndex',
+          REGION: this.region,
         },
       },
     );
 
-    props.contentMetadataTable?.grantWriteData(uploadMetadataFunction);
+    props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
+
+    const getMetadataFunction = new NodejsFunction(
+      this,
+      'getMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/get-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+
+    props.contentMetadataTable.grantReadData(getMetadataFunction);
 
     const createSubscriptionFunction = new NodejsFunction(
       this,
@@ -76,6 +93,8 @@ export class ApiStack extends cdk.Stack {
       },
     );
     props.subscriptionsTable.grantWriteData(createSubscriptionFunction);
+
+  
 
     const deleteSubscriptionFunction = new NodejsFunction(
       this,
@@ -150,7 +169,7 @@ export class ApiStack extends cdk.Stack {
     props.ratingTable.grantReadData(getRatingFunction);
 
     const api = new RestApi(this, 'srbflixApi', {
-      binaryMediaTypes: ['*/*'],
+      binaryMediaTypes: ['video/*'],
     });
 
     const auth = new CognitoUserPoolsAuthorizer(this, 'srbflixAuthorizer', {
@@ -184,6 +203,13 @@ export class ApiStack extends cdk.Stack {
 
     const uploadMetadataFunctionIntegration = new LambdaIntegration(
       uploadMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
+    const getMetadataFunctionIntegration = new LambdaIntegration(
+      getMetadataFunction,
       {
         proxy: true,
       },
@@ -276,12 +302,19 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
-    contentResource.addMethod('PUT', uploadMetadataFunctionIntegration, {
+    mediaResource.addMethod('PUT', uploadMetadataFunctionIntegration, {
       requestParameters: {
-        'method.request.path.movieId': true,
+        'method.request.path.movieId': false,
       },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
+
+    mediaResource.addMethod('GET', getMetadataFunctionIntegration,
+      {
+        authorizer: auth,
+        authorizationType: AuthorizationType.COGNITO,
+      },
+    );
   }
 }
