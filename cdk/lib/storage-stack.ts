@@ -9,6 +9,7 @@ import {
 } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 export class StorageStack extends cdk.Stack {
   public readonly contentBucket: IBucket;
@@ -25,9 +26,13 @@ export class StorageStack extends cdk.Stack {
       autoDeleteObjects: true,
     });
 
-    this.contentMetadataTable = new TableV2(this, 'contentMetadataTable', {
+    const contentMetadataTable = new TableV2(this, 'contentMetadataTable', {
       partitionKey: {
-        name: 'name',
+        name: 'videoId',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'title',
         type: AttributeType.STRING,
       },
       billing: Billing.provisioned({
@@ -35,6 +40,34 @@ export class StorageStack extends cdk.Stack {
         writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
       }),
     });
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'titleIndex',
+      partitionKey: { name: 'title', type: dynamodb.AttributeType.STRING },
+    });
+
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'genreIndex',
+      partitionKey: { name: 'genre', type: dynamodb.AttributeType.STRING },
+    });
+
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'directorIndex',
+      partitionKey: { name: 'director', type: dynamodb.AttributeType.STRING },
+    });
+
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'actorIndex',
+      partitionKey: { name: 'actor', type: dynamodb.AttributeType.STRING },
+    });
+
+    contentMetadataTable.addGlobalSecondaryIndex({
+      indexName: 'releaseYearIndex',
+      partitionKey: {
+        name: 'releaseYear',
+        type: dynamodb.AttributeType.NUMBER,
+      },
+    });
+    this.contentMetadataTable = contentMetadataTable;
 
     const subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
       partitionKey: {
@@ -64,6 +97,7 @@ export class StorageStack extends cdk.Stack {
     });
     this.subscriptionsTable = subscriptionsTable;
 
+    // a
     this.ratingTable = new TableV2(this, 'ratingTable', {
       partitionKey: {
         name: 'username',

@@ -9,7 +9,13 @@ import {
 } from 'aws-cdk-lib/aws-apigateway';
 import { IUserPool } from 'aws-cdk-lib/aws-cognito';
 import { ITableV2 } from 'aws-cdk-lib/aws-dynamodb';
-import { ManagedPolicy, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import {
+  ManagedPolicy,
+  PolicyDocument,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { IBucket } from 'aws-cdk-lib/aws-s3';
@@ -28,16 +34,40 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id);
 
-    const createContentFunction = new NodejsFunction(
+    const uploadMetadataFunction = new NodejsFunction(
       this,
-      'createContentFunction',
+      'uploadMetadataFunction',
       {
         runtime: Runtime.NODEJS_20_X,
-        entry: path.join(__dirname, './lambda/create-content.ts'),
+        entry: path.join(__dirname, './lambda/upload-metadata.ts'),
         handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          TITLE_INDEX: 'titleIndex',
+          GENRE_INDEX: 'genreIndex',
+          DIRECTOR_INDEX: 'directorIndex',
+          ACTOR_INDEX: 'actorIndex',
+          RELEASE_YEAR_INDEX: 'releaseYearIndex',
+          REGION: this.region,
+        },
       },
     );
-    props.contentMetadataTable.grantWriteData(createContentFunction);
+    props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
+
+    const getMetadataFunction = new NodejsFunction(
+      this,
+      'getMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/get-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+    props.contentMetadataTable.grantReadData(getMetadataFunction);
 
     const createSubscriptionFunction = new NodejsFunction(
       this,
@@ -152,6 +182,20 @@ export class ApiStack extends cdk.Stack {
 
     const getRatingIntegration = new LambdaIntegration(getRatingFunction);
 
+    const uploadMetadataFunctionIntegration = new LambdaIntegration(
+      uploadMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
+    const getMetadataFunctionIntegration = new LambdaIntegration(
+      getMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
       authorizer: auth,
@@ -215,6 +259,37 @@ export class ApiStack extends cdk.Stack {
       },
     });
 
+    const uploadIntegration = new AwsIntegration({
+      service: 's3',
+      integrationHttpMethod: 'PUT',
+      path: `${props.contentBucket.bucketName}/{movieId}`,
+      options: {
+        credentialsRole: new Role(this, 'ApiGatewayS3RoleUpload', {
+          assumedBy: new ServicePrincipal('apigateway.amazonaws.com'),
+          inlinePolicies: {
+            S3UploadPolicy: new PolicyDocument({
+              statements: [
+                new PolicyStatement({
+                  actions: ['s3:PutObject'],
+                  resources: [`${props.contentBucket.bucketArn}/*`],
+                }),
+              ],
+            }),
+          },
+        }),
+        requestParameters: {
+          'integration.request.path.movieId': 'method.request.path.movieId',
+          'integration.request.header.Content-Type':
+            'method.request.header.Content-Type',
+        },
+        integrationResponses: [
+          {
+            statusCode: '201',
+          },
+        ],
+      },
+    });
+
     contentResource.addMethod('GET', getIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
@@ -227,6 +302,33 @@ export class ApiStack extends cdk.Stack {
           },
         },
       ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    contentResource.addMethod('POST', uploadIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': true,
+      },
+      methodResponses: [
+        {
+          statusCode: '201',
+        },
+      ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+      },
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    mediaResource.addMethod('GET', getMetadataFunctionIntegration, {
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
