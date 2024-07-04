@@ -322,7 +322,7 @@ export class ApiStack extends cdk.Stack {
 
     mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
       requestParameters: {
-        'method.request.path.movieId': false,
+        'method.request.path.movieId': true,
       },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
