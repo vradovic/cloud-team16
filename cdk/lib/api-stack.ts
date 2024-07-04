@@ -52,7 +52,7 @@ export class ApiStack extends cdk.Stack {
       },
     );
 
-    props.contentMetadataTable?.grantWriteData(uploadMetadataFunction);
+    props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
 
     const createSubscriptionFunction = new NodejsFunction(
       this,
@@ -298,7 +298,7 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
-    contentResource.addMethod('PUT', uploadMetadataFunctionIntegration, {
+    mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
       },
