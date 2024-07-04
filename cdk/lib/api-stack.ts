@@ -42,6 +42,26 @@ export class ApiStack extends cdk.Stack {
     );
     props.contentBucket.grantPut(createContentFunction);
 
+    const uploadMetadataFunction = new NodejsFunction(
+      this,
+      'uploadMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/upload-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable?.tableName,
+          // TITLE_INDEX: 'titleIndex',
+          // GENRE_INDEX: 'genreIndex',
+          // DIRECTOR_INDEX: 'directorIndex',
+          // ACTOR_INDEX: 'actorIndex',
+          // RELEASE_YEAR_INDEX: 'releaseYearIndex',
+        },
+      },
+    );
+
+    props.contentMetadataTable?.grantWriteData(uploadMetadataFunction);
+
     const createSubscriptionFunction = new NodejsFunction(
       this,
       'createSubscriptionFunction',
@@ -162,6 +182,13 @@ export class ApiStack extends cdk.Stack {
       },
     );
 
+    const uploadMetadataFunctionIntegration = new LambdaIntegration(
+      uploadMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
       authorizer: auth,
@@ -244,6 +271,14 @@ export class ApiStack extends cdk.Stack {
     mediaResource.addMethod('POST', createContentFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': false,
+      },
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    contentResource.addMethod('PUT', uploadMetadataFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
       },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
