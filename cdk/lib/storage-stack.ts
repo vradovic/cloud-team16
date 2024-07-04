@@ -97,6 +97,7 @@ export class StorageStack extends cdk.Stack {
     });
     this.subscriptionsTable = subscriptionsTable;
 
+    // a
     this.ratingTable = new TableV2(this, 'ratingTable', {
       partitionKey: {
         name: 'username',
