@@ -31,13 +31,15 @@ export class StorageStack extends cdk.Stack {
         name: 'videoId',
         type: AttributeType.STRING,
       },
+      sortKey: {
+        name: 'title',
+        type: AttributeType.STRING,
+      },
       billing: Billing.provisioned({
         readCapacity: Capacity.fixed(1),
         writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
       }),
     });
-    this.contentMetadataTable = contentMetadataTable;
-
     contentMetadataTable.addGlobalSecondaryIndex({
       indexName: 'titleIndex',
       partitionKey: { name: 'title', type: dynamodb.AttributeType.STRING },
@@ -65,6 +67,7 @@ export class StorageStack extends cdk.Stack {
         type: dynamodb.AttributeType.NUMBER,
       },
     });
+    this.contentMetadataTable = contentMetadataTable;
 
     const subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
       partitionKey: {
