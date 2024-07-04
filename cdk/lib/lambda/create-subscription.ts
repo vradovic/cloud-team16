@@ -28,8 +28,7 @@ export const handler = async (
     }
 
     const { topic } = JSON.parse(event.body) as IBody;
-    const username =
-      event.requestContext.authorizer?.claims['cognito:username'];
+    const username = event.requestContext.authorizer?.claims['cognito:email'];
 
     if (!topic || !username) {
       return {

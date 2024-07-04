@@ -17,8 +17,7 @@ export const handler = async (
   event: APIGatewayEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const username =
-      event.requestContext.authorizer?.claims['cognito:username'];
+    const username = event.requestContext.authorizer?.claims['cognito:email'];
 
     if (!username) {
       return {

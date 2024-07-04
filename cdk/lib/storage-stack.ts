@@ -75,7 +75,7 @@ export class StorageStack extends cdk.Stack {
         type: AttributeType.STRING,
       },
       sortKey: {
-        name: 'username',
+        name: 'email',
         type: AttributeType.STRING,
       },
       billing: Billing.provisioned({
@@ -84,9 +84,9 @@ export class StorageStack extends cdk.Stack {
       }),
     });
     subscriptionsTable.addGlobalSecondaryIndex({
-      indexName: 'usernameIndex',
+      indexName: 'emailIndex',
       partitionKey: {
-        name: 'username',
+        name: 'email',
         type: AttributeType.STRING,
       },
       sortKey: {
