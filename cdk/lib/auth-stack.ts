@@ -2,16 +2,25 @@ import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 
+export interface AuthStackProps {
+  poolName: string;
+  domainName: string;
+  domainPrefix: string;
+}
+
 export class AuthStack extends cdk.Stack {
   public readonly userPool: cognito.IUserPool;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+  constructor(scope: Construct, id: string, props: AuthStackProps) {
+    super(scope, id);
 
-    this.userPool = new cognito.UserPool(this, 'srbflixUserPool', {
+    this.userPool = new cognito.UserPool(this, props.poolName, {
       selfSignUpEnabled: true,
       signInAliases: {
         username: true,
+        email: true,
+      },
+      autoVerify: {
         email: true,
       },
       standardAttributes: {
@@ -30,9 +39,9 @@ export class AuthStack extends cdk.Stack {
       },
     });
 
-    this.userPool.addDomain('srbflixDomain', {
+    this.userPool.addDomain(props.domainName, {
       cognitoDomain: {
-        domainPrefix: 'srbflix-auth',
+        domainPrefix: props.domainPrefix,
       },
     });
 
