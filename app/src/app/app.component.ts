@@ -26,7 +26,7 @@ export class AppComponent {
   }
 
   isLoggedIn() {
-    return this.cognitoService.getCurrentUser() !== null;
+    return this.cognitoService.isLoggedIn();
   }
 
   signOut() {
