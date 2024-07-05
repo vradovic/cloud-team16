@@ -90,7 +90,8 @@ const sendEmails = async (recipients: string[], message: string) => {
   });
 
   try {
-    await ses.send(command);
+    const result = await ses.send(command);
+    console.log(result);
   } catch (error) {
     console.error('Unable to send email: ', error);
   }
