@@ -36,6 +36,7 @@ const isMetadata = (obj: any): obj is IMetadata => {
 
 export const handler: SQSHandler = (event: SQSEvent): void => {
   for (const message of event.Records) {
+    console.log(message);
     handleMessage(message);
   }
 };
