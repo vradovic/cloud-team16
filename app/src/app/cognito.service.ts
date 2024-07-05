@@ -123,4 +123,8 @@ export class CognitoService {
       return null;
     }
   }
+
+  getCurrentUser() {
+    return this.userPool.getCurrentUser();
+  }
 }
