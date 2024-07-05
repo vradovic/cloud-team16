@@ -69,6 +69,7 @@ const handleMessage = async (message: SQSRecord) => {
 
   const emailMessage = getMessage(body);
   await sendEmails(recipients, emailMessage);
+  console.log('Emails sent');
 };
 
 const sendEmails = async (recipients: string[], message: string) => {
@@ -91,6 +92,7 @@ const sendEmails = async (recipients: string[], message: string) => {
 
   try {
     const result = await ses.send(command);
+    console.log('Received');
     console.log(result);
   } catch (error) {
     console.error('Unable to send email: ', error);
