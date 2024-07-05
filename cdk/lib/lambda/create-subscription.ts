@@ -28,10 +28,9 @@ export const handler = async (
     }
 
     const { topic } = JSON.parse(event.body) as IBody;
-    const username =
-      event.requestContext.authorizer?.claims['cognito:username'];
+    const email = event.requestContext.authorizer?.claims['email'];
 
-    if (!topic || !username) {
+    if (!topic || !email) {
       return {
         statusCode: 400,
         body: 'Missing required fields',
@@ -42,7 +41,7 @@ export const handler = async (
       TableName: TABLE_NAME,
       Item: {
         topic,
-        username,
+        email,
       },
     };
 
@@ -50,7 +49,7 @@ export const handler = async (
 
     return {
       statusCode: 201,
-      body: JSON.stringify({ topic, username }),
+      body: JSON.stringify({ topic, email }),
     };
   } catch (error) {
     console.error('Error inserting item: ', error);
