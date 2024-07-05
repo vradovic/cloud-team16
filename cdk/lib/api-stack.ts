@@ -165,7 +165,7 @@ export class ApiStack extends cdk.Stack {
       'notifySubscribersFunction',
       {
         runtime: Runtime.NODEJS_20_X,
-        entry: path.join(__dirname, './lambda/notify-subscribers'),
+        entry: path.join(__dirname, './lambda/notify-subscribers.ts'),
         handler: 'handler',
         environment: {
           REGION: this.region,
