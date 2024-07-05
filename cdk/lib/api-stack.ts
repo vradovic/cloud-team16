@@ -17,8 +17,12 @@ import {
   ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { IBucket } from 'aws-cdk-lib/aws-s3';
+import { Topic } from 'aws-cdk-lib/aws-sns';
+import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
+import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 import path from 'path';
 
@@ -28,11 +32,16 @@ export interface ApiStackProps {
   subscriptionsTable: ITableV2;
   userPool: IUserPool;
   ratingTable: ITableV2;
+  sourceEmail: string;
 }
 
 export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id);
+
+    const newMediaTopic = new Topic(this, 'NewMediaTopic', {
+      displayName: 'New media topic',
+    });
 
     const uploadMetadataFunction = new NodejsFunction(
       this,
@@ -49,10 +58,12 @@ export class ApiStack extends cdk.Stack {
           ACTOR_INDEX: 'actorIndex',
           RELEASE_YEAR_INDEX: 'releaseYearIndex',
           REGION: this.region,
+          TOPIC_ARN: newMediaTopic.topicArn,
         },
       },
     );
     props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
+    newMediaTopic.grantPublish(uploadMetadataFunction);
 
     const getMetadataFunction = new NodejsFunction(
       this,
@@ -125,7 +136,7 @@ export class ApiStack extends cdk.Stack {
         environment: {
           TABLE_NAME: props.subscriptionsTable.tableName,
           REGION: this.region,
-          INDEX_NAME: 'usernameIndex',
+          INDEX_NAME: 'emailIndex',
         },
       },
     );
@@ -171,6 +182,39 @@ export class ApiStack extends cdk.Stack {
       },
     });
     props.ratingTable.grantReadData(getRatingFunction);
+
+    const notifySubscribersQueue = new Queue(this, 'notifySubscribersQueue');
+    const notifySubscribersFunction = new NodejsFunction(
+      this,
+      'notifySubscribersFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/notify-subscribers.ts'),
+        handler: 'handler',
+        environment: {
+          REGION: this.region,
+          TABLE_NAME: props.subscriptionsTable.tableName,
+          SOURCE_EMAIL: props.sourceEmail,
+        },
+      },
+    );
+    props.subscriptionsTable.grantReadData(notifySubscribersFunction);
+    notifySubscribersFunction.addToRolePolicy(
+      new PolicyStatement({
+        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+        resources: ['*'],
+      }),
+    );
+
+    notifySubscribersQueue.grantConsumeMessages(notifySubscribersFunction);
+    notifySubscribersFunction.addEventSource(
+      new SqsEventSource(notifySubscribersQueue),
+    );
+    newMediaTopic.addSubscription(
+      new SqsSubscription(notifySubscribersQueue, {
+        rawMessageDelivery: true,
+      }),
+    );
 
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],

@@ -24,4 +24,5 @@ new ApiStack(app, 'ApiStack', {
   subscriptionsTable: storageStack.subscriptionsTable,
   userPool: authStack.userPool,
   ratingTable: storageStack.ratingTable,
+  sourceEmail: config.SOURCE_EMAIL,
 });

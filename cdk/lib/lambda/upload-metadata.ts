@@ -1,11 +1,16 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
-const region = process.env.REGION!;
-const client = new DynamoDBClient({ region: region });
-const dynamoDb = DynamoDBDocumentClient.from(client);
+
+const REGION = process.env.REGION!;
 const tableName = process.env.TABLE_NAME!;
+const TOPIC_ARN = process.env.TOPIC_ARN!;
+
+const client = new DynamoDBClient({ region: REGION });
+const dynamoDb = DynamoDBDocumentClient.from(client);
+const sns = new SNSClient({ region: REGION });
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   if (!event.body) {
@@ -16,6 +21,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   }
 
   const body = JSON.parse(event.body);
+
   const {
     movieId,
     title,
@@ -31,9 +37,14 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const directorsString = Array.isArray(directors) ? directors.join(', ') : '';
   const genresString = Array.isArray(genres) ? genres.join(', ') : '';
 
+  const metadata = body;
+
+
+
   const params = {
     TableName: tableName,
     Item: {
+
       movieId,
       title,
       description,
@@ -46,9 +57,21 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
   try {
     await dynamoDb.send(new PutCommand(params));
+
+    const result = await sns.send(
+      new PublishCommand({
+        Message: JSON.stringify(metadata),
+        TopicArn: TOPIC_ARN,
+      }),
+    );
+    console.log(result);
+
     return {
-      statusCode: 200,
-      body: JSON.stringify({ message: 'Video metadata saved successfully!', data: params.Item }),
+      statusCode: 201,
+      body: JSON.stringify({
+        message: 'Video metadata saved successfully!',
+        data: metadata,
+      }),
     };
   } catch (error) {
     console.error(error);
