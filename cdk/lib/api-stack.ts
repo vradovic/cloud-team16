@@ -194,7 +194,11 @@ export class ApiStack extends cdk.Stack {
     notifySubscribersFunction.addEventSource(
       new SqsEventSource(notifySubscribersQueue),
     );
-    newMediaTopic.addSubscription(new SqsSubscription(notifySubscribersQueue));
+    newMediaTopic.addSubscription(
+      new SqsSubscription(notifySubscribersQueue, {
+        rawMessageDelivery: true,
+      }),
+    );
 
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],
