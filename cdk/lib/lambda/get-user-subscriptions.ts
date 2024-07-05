@@ -17,21 +17,21 @@ export const handler = async (
   event: APIGatewayEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const username = event.requestContext.authorizer?.claims['cognito:email'];
+    const email = event.requestContext.authorizer?.claims['email'];
 
-    if (!username) {
+    if (!email) {
       return {
         statusCode: 400,
-        body: 'Missing username',
+        body: 'Missing email',
       };
     }
 
     const params: QueryCommandInput = {
       TableName: TABLE_NAME,
       IndexName: INDEX_NAME,
-      KeyConditionExpression: 'username = :username',
+      KeyConditionExpression: 'email = :email',
       ExpressionAttributeValues: {
-        ':username': username,
+        ':email': email,
       },
     };
     const dynamoResponse = await docClient.send(new QueryCommand(params));

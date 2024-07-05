@@ -28,9 +28,9 @@ export const handler = async (
     }
 
     const { topic } = JSON.parse(event.body) as IBody;
-    const username = event.requestContext.authorizer?.claims['cognito:email'];
+    const email = event.requestContext.authorizer?.claims['email'];
 
-    if (!topic || !username) {
+    if (!topic || !email) {
       return {
         statusCode: 400,
         body: 'Missing required fields',
@@ -41,7 +41,7 @@ export const handler = async (
       TableName: TABLE_NAME,
       Key: {
         topic,
-        username,
+        email,
       },
     };
 
