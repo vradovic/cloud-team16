@@ -19,7 +19,7 @@ exports.handler = async (
 
   const body = JSON.parse(event.body);
   const {
-    videoId,
+    movieId,
     title,
     description,
     actors,
@@ -31,7 +31,7 @@ exports.handler = async (
   const params = {
     TableName: tableName,
     Item: {
-      videoId,
+      movieId,
       title,
       description,
       actors,

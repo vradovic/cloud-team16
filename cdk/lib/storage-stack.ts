@@ -28,11 +28,7 @@ export class StorageStack extends cdk.Stack {
 
     const contentMetadataTable = new TableV2(this, 'contentMetadataTable', {
       partitionKey: {
-        name: 'videoId',
-        type: AttributeType.STRING,
-      },
-      sortKey: {
-        name: 'title',
+        name: 'movieId',
         type: AttributeType.STRING,
       },
       billing: Billing.provisioned({

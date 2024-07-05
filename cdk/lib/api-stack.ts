@@ -69,6 +69,22 @@ export class ApiStack extends cdk.Stack {
     );
     props.contentMetadataTable.grantReadData(getMetadataFunction);
 
+    const editMetadataFunction = new NodejsFunction(
+      this,
+      'editMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/edit-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+
+    props.contentMetadataTable.grantWriteData(editMetadataFunction);
+
     const createSubscriptionFunction = new NodejsFunction(
       this,
       'createSubscriptionFunction',
@@ -191,6 +207,13 @@ export class ApiStack extends cdk.Stack {
 
     const getMetadataFunctionIntegration = new LambdaIntegration(
       getMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
+    const editMetadataFunctionIntegreation = new LambdaIntegration(
+      editMetadataFunction,
       {
         proxy: true,
       },
@@ -320,9 +343,32 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
+    contentResource.addMethod('PUT', uploadIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': true,
+      },
+      methodResponses: [
+        {
+          statusCode: '204'
+        },
+      ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
     mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
+      },
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    mediaId.addMethod('PUT', editMetadataFunctionIntegreation, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': true,
       },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
