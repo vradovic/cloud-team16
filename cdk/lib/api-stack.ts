@@ -20,6 +20,8 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { IBucket } from 'aws-cdk-lib/aws-s3';
+import { Topic } from 'aws-cdk-lib/aws-sns';
+import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 import path from 'path';
@@ -37,6 +39,10 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id);
 
+    const newMediaTopic = new Topic(this, 'NewMediaTopic', {
+      displayName: 'New media topic',
+    });
+
     const uploadMetadataFunction = new NodejsFunction(
       this,
       'uploadMetadataFunction',
@@ -52,6 +58,7 @@ export class ApiStack extends cdk.Stack {
           ACTOR_INDEX: 'actorIndex',
           RELEASE_YEAR_INDEX: 'releaseYearIndex',
           REGION: this.region,
+          TOPIC_ARN: newMediaTopic.topicArn,
         },
       },
     );
@@ -186,6 +193,7 @@ export class ApiStack extends cdk.Stack {
     notifySubscribersFunction.addEventSource(
       new SqsEventSource(notifySubscribersQueue),
     );
+    newMediaTopic.addSubscription(new SqsSubscription(notifySubscribersQueue));
 
     const api = new RestApi(this, 'srbflixApi', {
       binaryMediaTypes: ['video/*'],
