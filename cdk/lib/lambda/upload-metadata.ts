@@ -1,19 +1,17 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
-const REGION = process.env.REGION!;
-const client = new DynamoDBClient({ region: REGION });
+const region = process.env.REGION!;
+const client = new DynamoDBClient({ region: region });
 const dynamoDb = DynamoDBDocumentClient.from(client);
 const tableName = process.env.TABLE_NAME!;
 
-exports.handler = async (
-  event: APIGatewayEvent,
-): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   if (!event.body) {
     return {
       statusCode: 400,
-      body: 'Missing body',
+      body: JSON.stringify({ message: 'Invalid input' }),
     };
   }
 
@@ -50,12 +48,10 @@ exports.handler = async (
     await dynamoDb.send(new PutCommand(params));
     return {
       statusCode: 200,
-      body: JSON.stringify({
-        message: 'Video metadata saved successfully!',
-        data: params.Item,
-      }),
+      body: JSON.stringify({ message: 'Video metadata saved successfully!', data: params.Item }),
     };
   } catch (error) {
+    console.error(error);
     return {
       statusCode: 500,
       body: JSON.stringify({
