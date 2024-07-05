@@ -350,7 +350,7 @@ export class ApiStack extends cdk.Stack {
       },
       methodResponses: [
         {
-          statusCode: '204'
+          statusCode: '204',
         },
       ],
       authorizer: auth,
