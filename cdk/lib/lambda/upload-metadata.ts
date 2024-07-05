@@ -41,12 +41,13 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   try {
     await dynamoDb.send(new PutCommand(params));
 
-    sns.send(
+    const result = await sns.send(
       new PublishCommand({
         Message: JSON.stringify(metadata),
         TopicArn: TOPIC_ARN,
       }),
     );
+    console.log(result);
 
     return {
       statusCode: 201,
