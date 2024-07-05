@@ -63,6 +63,10 @@ const handleMessage = async (message: SQSRecord) => {
     recipients.push(...emails);
   }
 
+  if (recipients.length <= 0) {
+    return;
+  }
+
   const emailMessage = getMessage(body);
   await sendEmails(recipients, emailMessage);
 };
