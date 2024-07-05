@@ -15,28 +15,62 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       };
     }
 
-    const body = JSON.parse(event.body || '{}');
+    if (!event.body) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Request body is empty' }),
+      };
+    }
+
+    const body = JSON.parse(event.body);
     const { title, description, actors, directors, genres, releaseYear } = body;
 
-    // Convert lists to concatenated strings
-    const actorsString = Array.isArray(actors) ? actors.join(', ') : '';
-    const directorsString = Array.isArray(directors) ? directors.join(', ') : '';
-    const genresString = Array.isArray(genres) ? genres.join(', ') : '';
+    // Build the update expression and expression attribute values dynamically
+    let updateExpression = 'SET';
+    const expressionAttributeValues: { [key: string]: any } = {};
+
+    if (title !== undefined) {
+      updateExpression += ' title = :title,';
+      expressionAttributeValues[':title'] = { S: title };
+    }
+    if (description !== undefined) {
+      updateExpression += ' description = :description,';
+      expressionAttributeValues[':description'] = { S: description };
+    }
+    if (actors !== undefined) {
+      updateExpression += ' actors = :actors,';
+      expressionAttributeValues[':actors'] = { S: Array.isArray(actors) ? actors.join(', ') : '' };
+    }
+    if (directors !== undefined) {
+      updateExpression += ' directors = :directors,';
+      expressionAttributeValues[':directors'] = { S: Array.isArray(directors) ? directors.join(', ') : '' };
+    }
+    if (genres !== undefined) {
+      updateExpression += ' genres = :genres,';
+      expressionAttributeValues[':genres'] = { S: Array.isArray(genres) ? genres.join(', ') : '' };
+    }
+    if (releaseYear !== undefined) {
+      updateExpression += ' releaseYear = :releaseYear,';
+      expressionAttributeValues[':releaseYear'] = { N: releaseYear.toString() };
+    }
+
+    // Remove the trailing comma from the update expression
+    updateExpression = updateExpression.slice(0, -1);
+
+    if (Object.keys(expressionAttributeValues).length === 0) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ message: 'Request body does not contain any updatable fields' }),
+      };
+    }
 
     const updateParams = {
       TableName: tableName,
       Key: {
         movieId: { S: movieId },  // Ensure this matches your table's primary key schema
       },
-      UpdateExpression: 'SET title = :title, description = :description, actors = :actors, directors = :directors, genres = :genres, releaseYear = :releaseYear',
-      ExpressionAttributeValues: {
-        ':title': { S: title || '' },
-        ':description': { S: description || '' },
-        ':actors': { S: actorsString },
-        ':directors': { S: directorsString },
-        ':genres': { S: genresString },
-        ':releaseYear': { N: releaseYear?.toString() || '0' },
-      },
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues: expressionAttributeValues,
     };
 
     await dynamoDbClient.send(new UpdateItemCommand(updateParams));

@@ -343,20 +343,6 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
-    contentResource.addMethod('PUT', uploadIntegration, {
-      requestParameters: {
-        'method.request.path.movieId': true,
-        'method.request.header.Content-Type': true,
-      },
-      methodResponses: [
-        {
-          statusCode: '204',
-        },
-      ],
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
-    });
-
     mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
