@@ -28,15 +28,20 @@ exports.handler = async (
     releaseYear,
   } = body;
 
+  // Convert lists to concatenated strings
+  const actorsString = Array.isArray(actors) ? actors.join(', ') : '';
+  const directorsString = Array.isArray(directors) ? directors.join(', ') : '';
+  const genresString = Array.isArray(genres) ? genres.join(', ') : '';
+
   const params = {
     TableName: tableName,
     Item: {
       movieId,
       title,
       description,
-      actors,
-      directors,
-      genres,
+      actors: actorsString,
+      directors: directorsString,
+      genres: genresString,
       releaseYear,
     },
   };
@@ -55,7 +60,7 @@ exports.handler = async (
       statusCode: 500,
       body: JSON.stringify({
         message: 'Failed to save video metadata.',
-        error,
+        error: (error as Error).message,
       }),
     };
   }
