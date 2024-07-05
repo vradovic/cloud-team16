@@ -67,7 +67,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     const updateParams = {
       TableName: tableName,
       Key: {
-        movieId: { S: movieId },  // Ensure this matches your table's primary key schema
+        movieId: { S: movieId },
       },
       UpdateExpression: updateExpression,
       ExpressionAttributeValues: expressionAttributeValues,
