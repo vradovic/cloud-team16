@@ -112,7 +112,7 @@ export class ApiStack extends cdk.Stack {
         environment: {
           TABLE_NAME: props.subscriptionsTable.tableName,
           REGION: this.region,
-          INDEX_NAME: 'usernameIndex',
+          INDEX_NAME: 'emailIndex',
         },
       },
     );
