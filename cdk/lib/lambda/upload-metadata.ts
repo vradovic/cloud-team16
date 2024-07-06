@@ -21,20 +21,37 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   }
 
   const body = JSON.parse(event.body);
-  const metadata = body;
+
+  const {
+    movieId,
+    title,
+    description,
+    actors,
+    directors,
+    genres,
+    releaseYear,
+  } = body;
 
   // Convert lists to concatenated strings
-  const actorsString = metadata.actors.join(', ');
-  const directorsString = metadata.directors.join(', ');
-  const genresString = metadata.genres.join(', ');
+  const actorsString = Array.isArray(actors) ? actors.join(', ') : '';
+  const directorsString = Array.isArray(directors) ? directors.join(', ') : '';
+  const genresString = Array.isArray(genres) ? genres.join(', ') : '';
+
+  const metadata = body;
+
+
 
   const params = {
     TableName: tableName,
     Item: {
-      ...metadata,
+
+      movieId,
+      title,
+      description,
       actors: actorsString,
       directors: directorsString,
       genres: genresString,
+      releaseYear,
     },
   };
 
@@ -60,7 +77,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     console.error(error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: 'Failed to save video metadata.', error }),
+      body: JSON.stringify({
+        message: 'Failed to save video metadata.',
+        error: (error as Error).message,
+      }),
     };
   }
 };

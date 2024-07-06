@@ -80,6 +80,38 @@ export class ApiStack extends cdk.Stack {
     );
     props.contentMetadataTable.grantReadData(getMetadataFunction);
 
+    const deleteMetadataFunction = new NodejsFunction(
+      this,
+      'deleteMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/delete-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+
+    props.contentMetadataTable.grantWriteData(deleteMetadataFunction);
+
+    const deleteVideoFunction = new NodejsFunction(
+      this,
+      'deleteVideoFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/delete-video.ts'),
+        handler: 'handler',
+        environment: {
+          BUCKET_NAME: props.contentBucket.bucketName,
+          REGION: this.region,
+        },
+      },
+    );
+
+    props.contentBucket.grantDelete(deleteVideoFunction);
+
     const createSubscriptionFunction = new NodejsFunction(
       this,
       'createSubscriptionFunction',
@@ -240,6 +272,20 @@ export class ApiStack extends cdk.Stack {
       },
     );
 
+    const deleteMetadataFunctionIntegration = new LambdaIntegration(
+      deleteMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
+    const deleteVideoFunctionIntegration = new LambdaIntegration(
+      deleteVideoFunction,
+      {
+        proxy: true,
+      },
+    );
+
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
       authorizer: auth,
@@ -364,7 +410,29 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
+    contentResource.addMethod('DELETE', deleteVideoFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': false,
+      },
+      methodResponses: [
+        {
+          statusCode: '200',
+        },
+      ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
     mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+      },
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
       },

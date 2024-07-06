@@ -26,19 +26,14 @@ export class StorageStack extends cdk.Stack {
       autoDeleteObjects: true,
     });
 
-    const contentMetadataTable = new TableV2(this, 'contentMetadataTable', {
+    const contentMetadataTable = new dynamodb.Table(this, 'contentMetadataTable', {
       partitionKey: {
-        name: 'videoId',
+        name: 'movieId',
         type: AttributeType.STRING,
       },
-      sortKey: {
-        name: 'title',
-        type: AttributeType.STRING,
-      },
-      billing: Billing.provisioned({
-        readCapacity: Capacity.fixed(1),
-        writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
-      }),
+      billingMode: dynamodb.BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1
     });
     contentMetadataTable.addGlobalSecondaryIndex({
       indexName: 'titleIndex',
