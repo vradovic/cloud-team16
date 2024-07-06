@@ -26,7 +26,12 @@ const paths: Record<TGroup, RegExp[]> = {
 
 const isAuthorized = (methodArn: string, groups: TGroup[]): boolean => {
   for (const group of groups) {
-    if (paths[group].some((path) => path.test(methodArn))) {
+    if (
+      paths[group].some((path) => {
+        console.log(`Testing ${path}`);
+        path.test(methodArn);
+      })
+    ) {
       return true;
     }
   }
@@ -58,12 +63,16 @@ export const handler: APIGatewayTokenAuthorizerHandler = async (
   event: APIGatewayTokenAuthorizerEvent,
 ): Promise<APIGatewayAuthorizerResult> => {
   const { authorizationToken, methodArn } = event;
-  console.log(methodArn);
+  console.log('Arn: ', methodArn);
+  console.log('User pool id: ', USER_POOL_ID);
+  console.log('Client id: ', CLIENT_ID);
+  console.log('Token: ', authorizationToken);
 
   let payload: CognitoIdTokenPayload;
   try {
-    payload = await verifier.verify(authorizationToken);
-  } catch {
+    payload = await verifier.verify(authorizationToken.split(' ')[2]);
+  } catch (error) {
+    console.error(error);
     throw new Error('Unauthorized');
   }
 
@@ -71,6 +80,7 @@ export const handler: APIGatewayTokenAuthorizerHandler = async (
 
   const groups = payload['cognito:groups'];
   if (!groups) {
+    console.log('No groups');
     return {
       principalId: sub,
       policyDocument: generatePolicy('Deny', methodArn),
@@ -78,6 +88,7 @@ export const handler: APIGatewayTokenAuthorizerHandler = async (
   }
 
   if (groups.some((group) => !isValidGroup(group))) {
+    console.log('One of the groups is invalid');
     return {
       principalId: sub,
       policyDocument: generatePolicy('Deny', methodArn),
@@ -85,11 +96,13 @@ export const handler: APIGatewayTokenAuthorizerHandler = async (
   }
 
   if (isAuthorized(methodArn, groups as TGroup[])) {
+    console.log('Authorized');
     return {
       principalId: sub,
       policyDocument: generatePolicy('Allow', methodArn),
     };
   } else {
+    console.log('Not authorized');
     return {
       principalId: sub,
       policyDocument: generatePolicy('Deny', methodArn),
