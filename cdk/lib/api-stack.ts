@@ -80,6 +80,22 @@ export class ApiStack extends cdk.Stack {
     );
     props.contentMetadataTable.grantReadData(getMetadataFunction);
 
+    const editMetadataFunction = new NodejsFunction(
+      this,
+      'editMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/edit-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+
+    props.contentMetadataTable.grantWriteData(editMetadataFunction);
+
     const createSubscriptionFunction = new NodejsFunction(
       this,
       'createSubscriptionFunction',
@@ -240,6 +256,13 @@ export class ApiStack extends cdk.Stack {
       },
     );
 
+    const editMetadataFunctionIntegreation = new LambdaIntegration(
+      editMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
       authorizer: auth,
@@ -367,6 +390,15 @@ export class ApiStack extends cdk.Stack {
     mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
+      },
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
+    mediaId.addMethod('PUT', editMetadataFunctionIntegreation, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': true,
       },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
