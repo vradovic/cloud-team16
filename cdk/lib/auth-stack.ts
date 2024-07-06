@@ -14,7 +14,7 @@ export class AuthStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id);
 
-    this.userPool = new cognito.UserPool(this, props.poolName, {
+    const userPool = new cognito.UserPool(this, props.poolName, {
       selfSignUpEnabled: true,
       signInAliases: {
         username: true,
@@ -39,13 +39,13 @@ export class AuthStack extends cdk.Stack {
       },
     });
 
-    this.userPool.addDomain(props.domainName, {
+    userPool.addDomain(props.domainName, {
       cognitoDomain: {
         domainPrefix: props.domainPrefix,
       },
     });
 
-    this.userPool.addClient('srbflixClient', {
+    userPool.addClient('srbflixClient', {
       authFlows: {
         userPassword: true,
         userSrp: true,
@@ -65,5 +65,19 @@ export class AuthStack extends cdk.Stack {
         logoutUrls: ['http://localhost:4200'],
       },
     });
+
+    new cognito.CfnUserPoolGroup(this, 'users-group', {
+      groupName: 'users',
+      description: 'Default users.',
+      userPoolId: userPool.userPoolId,
+    });
+
+    new cognito.CfnUserPoolGroup(this, 'admins-group', {
+      groupName: 'admins',
+      description: 'Admin group',
+      userPoolId: userPool.userPoolId,
+    });
+
+    this.userPool = userPool;
   }
 }
