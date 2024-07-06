@@ -10,6 +10,7 @@ export interface AuthStackProps {
 
 export class AuthStack extends cdk.Stack {
   public readonly userPool: cognito.IUserPool;
+  public readonly userPoolClient: cognito.IUserPoolClient;
 
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id);
@@ -45,7 +46,7 @@ export class AuthStack extends cdk.Stack {
       },
     });
 
-    userPool.addClient('srbflixClient', {
+    const userPoolClient = userPool.addClient('srbflixClient', {
       authFlows: {
         userPassword: true,
         userSrp: true,
@@ -79,5 +80,6 @@ export class AuthStack extends cdk.Stack {
     });
 
     this.userPool = userPool;
+    this.userPoolClient = userPoolClient;
   }
 }

@@ -6,9 +6,10 @@ import {
   ContentHandling,
   LambdaIntegration,
   RestApi,
+  TokenAuthorizer,
 } from 'aws-cdk-lib/aws-apigateway';
-import { IUserPool } from 'aws-cdk-lib/aws-cognito';
-import { ITableV2 } from 'aws-cdk-lib/aws-dynamodb';
+import { IUserPool, IUserPoolClient } from 'aws-cdk-lib/aws-cognito';
+import { ITable } from 'aws-cdk-lib/aws-dynamodb';
 import {
   ManagedPolicy,
   PolicyDocument,
@@ -28,11 +29,12 @@ import path from 'path';
 
 export interface ApiStackProps {
   contentBucket: IBucket;
-  contentMetadataTable: ITableV2;
-  subscriptionsTable: ITableV2;
+  contentMetadataTable: ITable;
+  subscriptionsTable: ITable;
   userPool: IUserPool;
-  ratingTable: ITableV2;
+  ratingTable: ITable;
   sourceEmail: string;
+  userPoolClient: IUserPoolClient;
 }
 
 export class ApiStack extends cdk.Stack {
@@ -41,6 +43,21 @@ export class ApiStack extends cdk.Stack {
 
     const newMediaTopic = new Topic(this, 'NewMediaTopic', {
       displayName: 'New media topic',
+    });
+
+    const authorizerFunction = new NodejsFunction(this, 'AuthorizerFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, './lambda/authorizer.ts'),
+      handler: 'handler',
+      environment: {
+        USER_POOL_ID: props.userPool.userPoolId,
+        CLIENT_ID: props.userPoolClient.userPoolClientId,
+      },
+    });
+
+    const authorizer = new TokenAuthorizer(this, 'Authorizer', {
+      handler: authorizerFunction,
+      identitySource: 'method.request.header.Authorization',
     });
 
     const uploadMetadataFunction = new NodejsFunction(
@@ -412,8 +429,7 @@ export class ApiStack extends cdk.Stack {
           },
         },
       ],
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
     });
 
     contentResource.addMethod('POST', uploadIntegration, {
