@@ -123,4 +123,43 @@ export class CognitoService {
       return null;
     }
   }
+
+  getCurrentUser() {
+    return this.userPool.getCurrentUser();
+  }
+
+  isLoggedIn() {
+    return this.getCurrentUser() !== null;
+  }
+
+  async getUserAttributes() {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) {
+      return null;
+    }
+
+    return new Promise<CognitoUserAttribute[]>((resolve, reject) => {
+      currentUser.getSession(
+        (err: Error | null, session: CognitoUserSession | null) => {
+          if (err) {
+            reject(err);
+          }
+
+          console.log(session);
+
+          currentUser.getUserAttributes((err, result) => {
+            if (err) {
+              reject(err);
+            }
+
+            if (result) {
+              resolve(result);
+            } else {
+              reject(new Error('User attributes are undefined'));
+            }
+          });
+        },
+      );
+    });
+  }
 }
