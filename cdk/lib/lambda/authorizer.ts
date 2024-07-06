@@ -18,15 +18,15 @@ const verifier = CognitoJwtVerifier.create({
 
 type TGroup = 'users' | 'admins' | 'test';
 
-const paths: Record<TGroup, string[]> = {
+const paths: Record<TGroup, RegExp[]> = {
   users: [],
   admins: [],
-  test: ['GET/media/{movieId}/content'],
+  test: [/GET\/media\/.+\/content/],
 };
 
 const isAuthorized = (methodArn: string, groups: TGroup[]): boolean => {
   for (const group of groups) {
-    if (paths[group].some((path) => methodArn.includes(path))) {
+    if (paths[group].some((path) => path.test(methodArn))) {
       return true;
     }
   }
