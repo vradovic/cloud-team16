@@ -26,7 +26,6 @@ export class StorageStack extends cdk.Stack {
       autoDeleteObjects: true,
     });
 
-    
     const contentMetadataTable = new dynamodb.Table(this, 'contentMetadataTable', {
       partitionKey: {
         name: 'movieId',

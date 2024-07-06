@@ -80,6 +80,19 @@ export class ApiStack extends cdk.Stack {
     );
     props.contentMetadataTable.grantReadData(getMetadataFunction);
 
+    const deleteMetadataFunction = new NodejsFunction(
+      this,
+      'deleteMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/delete-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
     const editMetadataFunction = new NodejsFunction(
       this,
       'editMetadataFunction',
@@ -94,6 +107,23 @@ export class ApiStack extends cdk.Stack {
       },
     );
 
+    props.contentMetadataTable.grantWriteData(deleteMetadataFunction);
+
+    const deleteVideoFunction = new NodejsFunction(
+      this,
+      'deleteVideoFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/delete-video.ts'),
+        handler: 'handler',
+        environment: {
+          BUCKET_NAME: props.contentBucket.bucketName,
+          REGION: this.region,
+        },
+      },
+    );
+
+    props.contentBucket.grantDelete(deleteVideoFunction);
     props.contentMetadataTable.grantWriteData(editMetadataFunction);
 
     const createSubscriptionFunction = new NodejsFunction(
@@ -256,6 +286,19 @@ export class ApiStack extends cdk.Stack {
       },
     );
 
+    const deleteMetadataFunctionIntegration = new LambdaIntegration(
+      deleteMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
+    const deleteVideoFunctionIntegration = new LambdaIntegration(
+      deleteVideoFunction,
+      {
+        proxy: true,
+      },
+    );
     const editMetadataFunctionIntegreation = new LambdaIntegration(
       editMetadataFunction,
       {
@@ -387,6 +430,20 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
+    contentResource.addMethod('DELETE', deleteVideoFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': false,
+      },
+      methodResponses: [
+        {
+          statusCode: '200',
+        },
+      ],
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
     mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
@@ -395,6 +452,13 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
+    mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        },
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
     mediaId.addMethod('PUT', editMetadataFunctionIntegreation, {
       requestParameters: {
         'method.request.path.movieId': true,
