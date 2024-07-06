@@ -29,6 +29,7 @@
     "@aws-sdk/client-sns": "^3.609.0",
     "@aws-sdk/lib-dynamodb": "^3.602.0",
     "aws-cdk-lib": "2.147.0",
+    "aws-jwt-verify": "^4.0.1",
     "constructs": "^10.0.0",
     "dotenv": "^16.4.5",
     "multipart-form-parser": "^1.1.2",
