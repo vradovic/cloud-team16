@@ -1,11 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import {
   AttributeType,
-  Billing,
-  Capacity,
-  ITableV2,
   ProjectionType,
-  TableV2,
+  Table,
+  ITable,
+  BillingMode,
 } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
@@ -13,9 +12,9 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 export class StorageStack extends cdk.Stack {
   public readonly contentBucket: IBucket;
-  public readonly contentMetadataTable: ITableV2;
-  public readonly subscriptionsTable: ITableV2;
-  public readonly ratingTable: ITableV2;
+  public readonly contentMetadataTable: ITable;
+  public readonly subscriptionsTable: ITable;
+  public readonly ratingTable: ITable;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -26,12 +25,12 @@ export class StorageStack extends cdk.Stack {
       autoDeleteObjects: true,
     });
 
-    const contentMetadataTable = new dynamodb.Table(this, 'contentMetadataTable', {
+    const contentMetadataTable = new Table(this, 'contentMetadataTable', {
       partitionKey: {
         name: 'movieId',
         type: AttributeType.STRING,
       },
-      billingMode: dynamodb.BillingMode.PROVISIONED,
+      billingMode: BillingMode.PROVISIONED,
       readCapacity: 1,
       writeCapacity: 1,
     });
@@ -64,7 +63,7 @@ export class StorageStack extends cdk.Stack {
     });
     this.contentMetadataTable = contentMetadataTable;
 
-    const subscriptionsTable = new TableV2(this, 'subscriptionsTable', {
+    const subscriptionsTable = new Table(this, 'subscriptionsTable', {
       partitionKey: {
         name: 'topic',
         type: AttributeType.STRING,
@@ -73,10 +72,9 @@ export class StorageStack extends cdk.Stack {
         name: 'email',
         type: AttributeType.STRING,
       },
-      billing: Billing.provisioned({
-        readCapacity: Capacity.fixed(1),
-        writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
-      }),
+      billingMode: BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1,
     });
     subscriptionsTable.addGlobalSecondaryIndex({
       indexName: 'emailIndex',
@@ -92,7 +90,7 @@ export class StorageStack extends cdk.Stack {
     });
     this.subscriptionsTable = subscriptionsTable;
 
-    this.ratingTable = new TableV2(this, 'ratingTable', {
+    this.ratingTable = new Table(this, 'ratingTable', {
       partitionKey: {
         name: 'username',
         type: AttributeType.STRING,
@@ -101,10 +99,9 @@ export class StorageStack extends cdk.Stack {
         name: 'movie_id',
         type: AttributeType.STRING,
       },
-      billing: Billing.provisioned({
-        readCapacity: Capacity.fixed(1),
-        writeCapacity: Capacity.autoscaled({ maxCapacity: 1 }),
-      }),
+      billingMode: BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1,
     });
   }
 }
