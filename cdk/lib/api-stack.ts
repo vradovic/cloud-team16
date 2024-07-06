@@ -93,6 +93,19 @@ export class ApiStack extends cdk.Stack {
         },
       },
     );
+    const editMetadataFunction = new NodejsFunction(
+      this,
+      'editMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/edit-metadata.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
 
     props.contentMetadataTable.grantWriteData(deleteMetadataFunction);
 
@@ -111,6 +124,7 @@ export class ApiStack extends cdk.Stack {
     );
 
     props.contentBucket.grantDelete(deleteVideoFunction);
+    props.contentMetadataTable.grantWriteData(editMetadataFunction);
 
     const createSubscriptionFunction = new NodejsFunction(
       this,
@@ -285,6 +299,12 @@ export class ApiStack extends cdk.Stack {
         proxy: true,
       },
     );
+    const editMetadataFunctionIntegreation = new LambdaIntegration(
+      editMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
 
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
@@ -435,6 +455,14 @@ export class ApiStack extends cdk.Stack {
     mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
+        },
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+    mediaId.addMethod('PUT', editMetadataFunctionIntegreation, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+        'method.request.header.Content-Type': true,
       },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,

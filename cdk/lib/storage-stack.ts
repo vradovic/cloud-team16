@@ -33,7 +33,7 @@ export class StorageStack extends cdk.Stack {
       },
       billingMode: dynamodb.BillingMode.PROVISIONED,
       readCapacity: 1,
-      writeCapacity: 1
+      writeCapacity: 1,
     });
     contentMetadataTable.addGlobalSecondaryIndex({
       indexName: 'titleIndex',
