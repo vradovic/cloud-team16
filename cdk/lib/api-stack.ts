@@ -3,8 +3,6 @@ import {
   AuthorizationType,
   AwsIntegration,
   ContentHandling,
-  Cors,
-  CorsOptions,
   LambdaIntegration,
   RestApi,
   TokenAuthorizer,
@@ -83,7 +81,6 @@ export class ApiStack extends cdk.Stack {
     );
     props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
     newMediaTopic.grantPublish(uploadMetadataFunction);
-    props.contentBucket.grantRead(uploadMetadataFunction);
 
     const deleteMetadataFunction = new NodejsFunction(
       this,
@@ -431,12 +428,6 @@ export class ApiStack extends cdk.Stack {
       authorizer,
     });
 
-    const corsOptions: CorsOptions = {
-      allowOrigins: ['http://localhost:4200'], // or specify your origin like ['http://localhost:4200']
-      allowMethods: Cors.ALL_METHODS, // or specify specific HTTP methods
-      allowHeaders: ['Content-Type', 'Authorization'], // or specify specific headers
-    };
-
     contentResource.addMethod('POST', uploadIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
@@ -449,10 +440,7 @@ export class ApiStack extends cdk.Stack {
       ],
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
-      ...corsOptions
     });
-
-
 
     contentResource.addMethod('DELETE', deleteVideoFunctionIntegration, {
       requestParameters: {
@@ -474,7 +462,6 @@ export class ApiStack extends cdk.Stack {
       },
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
-      ...corsOptions
     });
 
     mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
