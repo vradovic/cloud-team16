@@ -342,6 +342,34 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.COGNITO,
     });
 
+    const filterMetadataFunction = new NodejsFunction(
+      this,
+      'filterMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/filter-content.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+    props.contentMetadataTable.grantReadData(filterMetadataFunction);
+
+    const filterMetadataFunctionIntegration = new LambdaIntegration(
+      filterMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
+
+    const filterResource = api.root.addResource('filter');
+    filterResource.addMethod('GET', filterMetadataFunctionIntegration, {
+      authorizer: auth,
+      authorizationType: AuthorizationType.COGNITO,
+    });
+
     const getIntegration = new AwsIntegration({
       service: 's3',
       integrationHttpMethod: 'GET',
@@ -455,7 +483,7 @@ export class ApiStack extends cdk.Stack {
     mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
-        },
+      },
       authorizer: auth,
       authorizationType: AuthorizationType.COGNITO,
     });
