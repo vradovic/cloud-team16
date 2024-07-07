@@ -70,7 +70,7 @@ export const handler: APIGatewayTokenAuthorizerHandler = async (
 
   let payload: CognitoIdTokenPayload;
   try {
-    payload = await verifier.verify(authorizationToken.split(' ')[2]);
+    payload = await verifier.verify(authorizationToken);
   } catch (error) {
     console.error(error);
     throw new Error('Unauthorized');
