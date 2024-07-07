@@ -3,6 +3,7 @@ import {
   AuthorizationType,
   AwsIntegration,
   ContentHandling,
+  Cors,
   LambdaIntegration,
   RestApi,
   TokenAuthorizer,
@@ -264,6 +265,9 @@ export class ApiStack extends cdk.Stack {
     );
 
     const api = new RestApi(this, 'srbflixApi', {
+      defaultCorsPreflightOptions: {
+        allowOrigins: Cors.ALL_ORIGINS,
+      },
       binaryMediaTypes: ['video/*'],
     });
 
