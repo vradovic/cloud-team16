@@ -104,6 +104,10 @@ export const handler: APIGatewayTokenAuthorizerHandler = async (
     return {
       principalId: sub,
       policyDocument: generatePolicy('Allow', methodArn),
+      context: {
+        username: payload['cognito:username'],
+        email: payload['email']?.toString(),
+      },
     };
   } else {
     console.log('Not authorized');

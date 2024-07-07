@@ -17,7 +17,7 @@ export const handler = async (
   event: APIGatewayEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const email = event.requestContext.authorizer?.claims['email'];
+    const email = event.requestContext.authorizer?.claims.email;
 
     if (!email) {
       return {

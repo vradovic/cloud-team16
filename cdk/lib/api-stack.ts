@@ -2,7 +2,6 @@ import * as cdk from 'aws-cdk-lib';
 import {
   AuthorizationType,
   AwsIntegration,
-  CognitoUserPoolsAuthorizer,
   ContentHandling,
   LambdaIntegration,
   RestApi,
@@ -58,6 +57,7 @@ export class ApiStack extends cdk.Stack {
     const authorizer = new TokenAuthorizer(this, 'Authorizer', {
       handler: authorizerFunction,
       identitySource: 'method.request.header.Authorization',
+      resultsCacheTtl: cdk.Duration.minutes(0),
     });
 
     const uploadMetadataFunction = new NodejsFunction(
@@ -267,10 +267,6 @@ export class ApiStack extends cdk.Stack {
       binaryMediaTypes: ['video/*'],
     });
 
-    const auth = new CognitoUserPoolsAuthorizer(this, 'srbflixAuthorizer', {
-      cognitoUserPools: [props.userPool],
-    });
-
     const createSubscriptionIntegration = new LambdaIntegration(
       createSubscriptionFunction,
     );
@@ -325,18 +321,18 @@ export class ApiStack extends cdk.Stack {
 
     const subscriptionResource = api.root.addResource('subscriptions');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     subscriptionResource.addMethod('DELETE', deleteSubscriptionIntegration, {
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     subscriptionResource.addMethod('GET', getUserSubscriptionsIntegration, {
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     const mediaResource = api.root.addResource('media');
@@ -345,18 +341,18 @@ export class ApiStack extends cdk.Stack {
     const contentResource = mediaId.addResource('content');
 
     ratingResource.addMethod('POST', createRatingIntegration, {
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     ratingResource.addMethod('DELETE', deleteRatingIntegration, {
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     ratingResource.addMethod('GET', getRatingIntegration, {
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     const getIntegration = new AwsIntegration({
@@ -442,8 +438,8 @@ export class ApiStack extends cdk.Stack {
           statusCode: '201',
         },
       ],
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     contentResource.addMethod('DELETE', deleteVideoFunctionIntegration, {
@@ -464,8 +460,8 @@ export class ApiStack extends cdk.Stack {
       requestParameters: {
         'method.request.path.movieId': true,
       },
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
@@ -480,13 +476,13 @@ export class ApiStack extends cdk.Stack {
         'method.request.path.movieId': true,
         'method.request.header.Content-Type': true,
       },
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     mediaResource.addMethod('GET', getMetadataFunctionIntegration, {
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
   }
 }
