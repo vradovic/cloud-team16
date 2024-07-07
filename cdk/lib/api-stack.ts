@@ -452,8 +452,8 @@ export class ApiStack extends cdk.Stack {
           statusCode: '200',
         },
       ],
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
 
     mediaId.addMethod('POST', uploadMetadataFunctionIntegration, {
@@ -467,9 +467,9 @@ export class ApiStack extends cdk.Stack {
     mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
-        },
-      authorizer: auth,
-      authorizationType: AuthorizationType.COGNITO,
+      },
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
     });
     mediaId.addMethod('PUT', editMetadataFunctionIntegreation, {
       requestParameters: {
