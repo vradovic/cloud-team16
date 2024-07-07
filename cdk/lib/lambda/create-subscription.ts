@@ -28,7 +28,7 @@ export const handler = async (
     }
 
     const { topic } = JSON.parse(event.body) as IBody;
-    const email = event.requestContext.authorizer?.claims['email'];
+    const email = event.requestContext.authorizer?.email;
 
     if (!topic || !email) {
       return {

@@ -1,6 +1,10 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { Policy, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
+import path from 'path';
 
 export interface AuthStackProps {
   poolName: string;
@@ -10,11 +14,12 @@ export interface AuthStackProps {
 
 export class AuthStack extends cdk.Stack {
   public readonly userPool: cognito.IUserPool;
+  public readonly userPoolClient: cognito.IUserPoolClient;
 
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id);
 
-    this.userPool = new cognito.UserPool(this, props.poolName, {
+    const userPool = new cognito.UserPool(this, props.poolName, {
       selfSignUpEnabled: true,
       signInAliases: {
         username: true,
@@ -39,13 +44,13 @@ export class AuthStack extends cdk.Stack {
       },
     });
 
-    this.userPool.addDomain(props.domainName, {
+    userPool.addDomain(props.domainName, {
       cognitoDomain: {
         domainPrefix: props.domainPrefix,
       },
     });
 
-    this.userPool.addClient('srbflixClient', {
+    const userPoolClient = userPool.addClient('srbflixClient', {
       authFlows: {
         userPassword: true,
         userSrp: true,
@@ -65,5 +70,43 @@ export class AuthStack extends cdk.Stack {
         logoutUrls: ['http://localhost:4200'],
       },
     });
+
+    new cognito.CfnUserPoolGroup(this, 'users-group', {
+      groupName: 'users',
+      description: 'Default users.',
+      userPoolId: userPool.userPoolId,
+    });
+
+    new cognito.CfnUserPoolGroup(this, 'admins-group', {
+      groupName: 'admins',
+      description: 'Admin group',
+      userPoolId: userPool.userPoolId,
+    });
+
+    const postSignUpFunction = new NodejsFunction(this, 'PostSignUpFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, './lambda/post-sign-up.ts'),
+      handler: 'handler',
+      environment: {
+        REGION: this.region,
+      },
+    });
+    userPool.addTrigger(
+      cognito.UserPoolOperation.POST_CONFIRMATION,
+      postSignUpFunction,
+    );
+    postSignUpFunction.role!.attachInlinePolicy(
+      new Policy(this, 'PostSignUpPolicy', {
+        statements: [
+          new PolicyStatement({
+            actions: ['cognito-idp:AdminAddUserToGroup'],
+            resources: [userPool.userPoolArn],
+          }),
+        ],
+      }),
+    );
+
+    this.userPool = userPool;
+    this.userPoolClient = userPoolClient;
   }
 }
