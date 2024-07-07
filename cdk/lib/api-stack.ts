@@ -3,6 +3,7 @@ import {
   AuthorizationType,
   AwsIntegration,
   ContentHandling,
+  Cors,
   LambdaIntegration,
   RestApi,
   TokenAuthorizer,
@@ -249,6 +250,9 @@ export class ApiStack extends cdk.Stack {
     );
 
     const api = new RestApi(this, 'srbflixApi', {
+      defaultCorsPreflightOptions: {
+        allowOrigins: Cors.ALL_ORIGINS,
+      },
       binaryMediaTypes: ['video/*'],
     });
 
@@ -298,14 +302,18 @@ export class ApiStack extends cdk.Stack {
     );
 
     const subscriptionResource = api.root.addResource('subscriptions');
+    const topicResource = subscriptionResource.addResource('{topic}');
     subscriptionResource.addMethod('POST', createSubscriptionIntegration, {
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
     });
 
-    subscriptionResource.addMethod('DELETE', deleteSubscriptionIntegration, {
+    topicResource.addMethod('DELETE', deleteSubscriptionIntegration, {
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
+      requestParameters: {
+        'method.request.path.topic': true,
+      },
     });
 
     subscriptionResource.addMethod('GET', getUserSubscriptionsIntegration, {

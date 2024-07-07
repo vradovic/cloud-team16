@@ -1,28 +1,35 @@
-import { HttpHeaders, HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { CognitoService } from './cognito.service';
-import { from } from 'rxjs';
+import { from, Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  if (!req.url.includes('/api/')) {
-    return next(req);
+  if (!req.url.includes(environment.apiUrl)) {
+    return from(next(req));
   }
-
   const cognitoService = inject(CognitoService);
-  let authReq: HttpHeaders | null = null;
 
-  from(cognitoService.getSession()).subscribe((session) => {
-    if (session) {
-      authReq = req.headers.append(
-        'Authorization',
-        `Bearer ${session.getIdToken()}`,
-      );
-    }
+  return new Observable((observer) => {
+    cognitoService.getSession().then((session) => {
+      if (session) {
+        const authReq = req.clone({
+          setHeaders: {
+            Authorization: session.getIdToken().getJwtToken(),
+          },
+        });
+        next(authReq).subscribe(
+          (event) => observer.next(event),
+          (err) => observer.error(err),
+          () => observer.complete(),
+        );
+      } else {
+        next(req).subscribe(
+          (event) => observer.next(event),
+          (err) => observer.error(err),
+          () => observer.complete(),
+        );
+      }
+    });
   });
-
-  if (authReq) {
-    return next(authReq);
-  }
-
-  return next(req);
 };
