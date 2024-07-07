@@ -1,6 +1,9 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { Runtime } from 'aws-cdk-lib/aws-lambda';
+import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
+import path from 'path';
 
 export interface AuthStackProps {
   poolName: string;
@@ -78,6 +81,20 @@ export class AuthStack extends cdk.Stack {
       description: 'Admin group',
       userPoolId: userPool.userPoolId,
     });
+
+    const postSignUpFunction = new NodejsFunction(this, 'PostSignUpFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, './lambda/post-sign-up.ts'),
+      handler: 'handler',
+      environment: {
+        REGION: this.region,
+      },
+    });
+    userPool.grant(postSignUpFunction, 'cognito-idp:AdminAddUserToGroup');
+    userPool.addTrigger(
+      cognito.UserPoolOperation.POST_CONFIRMATION,
+      postSignUpFunction,
+    );
 
     this.userPool = userPool;
     this.userPoolClient = userPoolClient;
