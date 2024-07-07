@@ -1,1 +1,13 @@
-<p>subscriptions works!</p>
+@if (isLoggedIn()) {
+  <ul>
+    @for (subscription of subscriptions; track $index) {
+      <li>{{ subscription.topic }}</li>
+    }
+  </ul>
+  <label for="topic">Topic:</label>
+  <input type="text" name="topic" id="topic" [(ngModel)]="topic" />
+  <button (click)="createSubscription()">Create</button>
+  <button (click)="deleteSubscription()">Delete</button>
+} @else {
+  <p>You must sign in to manage subscriptions.</p>
+}
