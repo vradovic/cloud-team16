@@ -1,31 +1,28 @@
-<form (ngSubmit)="submitForm()" #uploadForm="ngForm">
-    <label for="videoFile">Upload Video File:</label>
-    <input type="file" id="videoFile" name="videoFile" accept="video/mp4" required (change)="onFileSelected($event)" #fileInput>
-    <br><br>
-
-    <label for="title">Title:</label>
-    <input type="text" id="title" name="title" [(ngModel)]="videoMetadata.title" required>
-    <br><br>
-
-    <label for="description">Description:</label>
-    <textarea id="description" name="description" [(ngModel)]="videoMetadata.description" required></textarea>
-    <br><br>
-
-    <label for="actors">Actors (comma-separated):</label>
-    <input type="text" id="actors" name="actors" [(ngModel)]="actorsInput" required>
-    <br><br>
-
-    <label for="directors">Directors (comma-separated):</label>
-    <input type="text" id="directors" name="directors" [(ngModel)]="directorsInput" required>
-    <br><br>
-
-    <label for="genres">Genres (comma-separated):</label>
-    <input type="text" id="genres" name="genres" [(ngModel)]="genresInput" required>
-    <br><br>
-
-    <label for="releaseYear">Release year:</label>
-    <input type="number" id="releaseYear" name="releaseYear" [(ngModel)]="videoMetadata.releaseYear" required>
-    <br><br>
-
-    <button type="submit" [disabled]="!uploadForm.valid">Upload Video</button>
-</form>
+<div>
+    <h2>Create New Content</h2>
+    <form (submit)="submitForm($event)">
+      <label for="title">Title:</label><br>
+      <input type="text" id="title" name="title" required><br><br>
+  
+      <label for="description">Description:</label><br>
+      <textarea id="description" name="description"></textarea><br><br>
+  
+      <label for="actors">Actors (comma-separated):</label><br>
+      <input type="text" id="actors" name="actors"><br><br>
+  
+      <label for="directors">Directors (comma-separated):</label><br>
+      <input type="text" id="directors" name="directors"><br><br>
+  
+      <label for="genres">Genres (comma-separated):</label><br>
+      <input type="text" id="genres" name="genres"><br><br>
+  
+      <label for="releaseYear">Release Year:</label><br>
+      <input type="number" id="releaseYear" name="releaseYear"><br><br>
+  
+      <label for="videoFile">Video File:</label><br>
+      <input type="file" id="videoFile" name="videoFile" accept="video/*" required><br><br>
+  
+      <button type="submit">Submit</button>
+    </form>
+  </div>
+  

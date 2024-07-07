@@ -1,72 +1,53 @@
 import { Component } from '@angular/core';
-import { IMetadata } from '../model/metadata.model';
-import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 import { CreateContentService } from '../create-content.service';
-
 
 @Component({
   selector: 'app-create-content',
-  standalone: true,
-  imports: [FormsModule, CommonModule],
   templateUrl: './create-content.component.html',
-  styleUrl: './create-content.component.scss'
+  styleUrls: ['./create-content.component.scss']
 })
 export class CreateContentComponent {
-  videoFile: File | null = null;
-  mediaId: string = this.generateMediaId();
-  videoMetadata: IMetadata = {
-    mediaId: this.mediaId,
-    title: '',
-    description: null,
-    actors: [],
-    directors: [],
-    genres: [],
-    releaseYear: null
-  };
 
-  actorsInput: string = '';
-  directorsInput: string = '';
-  genresInput: string = '';
+  constructor(private createContentService: CreateContentService) {}
 
-  constructor (private createContentService : CreateContentService) {}
+  submitForm(event: Event): void {
+    event.preventDefault();
 
+    const form = event.target as HTMLFormElement;
+    const formData = new FormData(form);
 
-  onFileSelected(event: any) {
-    this.videoFile = event.target.files[0];
-  }
+    const videoFile = formData.get('videoFile') as File;
+    const title = formData.get('title') as string;
+    const description = formData.get('description') as string;
+    const actors = (formData.get('actors') as string)?.split(',').map(actor => actor.trim()) || [];
+    const directors = (formData.get('directors') as string)?.split(',').map(director => director.trim()) || [];
+    const genres = (formData.get('genres') as string)?.split(',').map(genre => genre.trim()) || [];
+    const releaseYear = parseInt(formData.get('releaseYear') as string, 10);
 
-  submitForm() {
-    if(this.videoFile == null) {
+    if (!videoFile) {
       alert('Please select a video file');
       return;
     }
 
-    // Split comma-separated values into arrays
-    this.videoMetadata.actors = this.actorsInput.split(',').map(actor => actor.trim());
-    this.videoMetadata.directors = this.directorsInput.split(',').map(director => director.trim());
-    this.videoMetadata.genres = this.genresInput.split(',').map(genre => genre.trim());
+    const mediaId = this.generateMediaId();
 
-    this.createContentService.uploadVideo(this.mediaId, this.videoFile);
-
-    console.log('Uploading video file: ', this.videoFile);
-    console.log('Video metadata: ', this.videoMetadata);
-
-    // Clear form fields after submission
-    this.videoFile = null;
-    this.videoMetadata = {
-      mediaId: '',
-      title: '',
-      description: null,
-      genres: [],
-      actors: [],
-      directors: [],
-      releaseYear: null
+    const videoMetadata = {
+      mediaId,
+      title,
+      description,
+      actors,
+      directors,
+      genres,
+      releaseYear
     };
+
+    this.createContentService.uploadContent(mediaId, videoFile);
+
+    // Optional: Clear form fields after submission
+    form.reset();
   }
 
   generateMediaId(): string {
-    // Example of generating a random alphanumeric ID
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
     for (let i = 0; i < 10; i++) {

@@ -9,7 +9,7 @@ export class CreateContentService {
 
   constructor(private http: HttpClient) { }
 
-  uploadVideo(mediaId: string, file: File): Promise<void> {
+  uploadContent(mediaId: string, file: File): Promise<void> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -18,7 +18,7 @@ export class CreateContentService {
     });
 
     // Replace 'YOUR_API_ENDPOINT' with your actual API endpoint
-    return this.http.put(environment.apiUrl + `media/${mediaId}`, formData, { headers })
+    return this.http.post(environment.apiUrl + `media/${mediaId}`, formData, { headers })
       .toPromise()
       .then(() => {
         console.log('Video uploaded successfully');
