@@ -6,10 +6,6 @@ import {
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 
-interface IBody {
-  topic?: string;
-}
-
 const REGION = process.env.REGION!;
 const TABLE_NAME = process.env.TABLE_NAME!;
 
@@ -20,20 +16,21 @@ export const handler = async (
   event: APIGatewayEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    if (!event.body) {
+    let topic = event.pathParameters?.topic;
+    if (!topic) {
       return {
         statusCode: 400,
-        body: 'Missing body',
+        body: 'Missing topic name',
       };
     }
 
-    const { topic } = JSON.parse(event.body) as IBody;
-    const email = event.requestContext.authorizer?.email;
+    topic = decodeURI(topic);
 
-    if (!topic || !email) {
+    const email = event.requestContext.authorizer?.email;
+    if (!email) {
       return {
         statusCode: 400,
-        body: 'Missing required fields',
+        body: 'Missing email',
       };
     }
 
