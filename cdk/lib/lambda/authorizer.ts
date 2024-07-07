@@ -16,12 +16,16 @@ const verifier = CognitoJwtVerifier.create({
   clientId: CLIENT_ID,
 });
 
-type TGroup = 'users' | 'admins' | 'test';
+type TGroup = 'users' | 'admins';
 
+// Regex for method arns in api gateway
 const paths: Record<TGroup, RegExp[]> = {
-  users: [],
-  admins: [],
-  test: [/GET\/media\/.+\/content/],
+  users: [
+    /GET\/media.+/,
+    /(GET|POST|DELETE)\/media\/.+\/rating/,
+    /(GET|POST|DELETE)\/subscriptions/,
+  ],
+  admins: [/(GET|POST|PUT|DELETE)\/media.+/],
 };
 
 const isAuthorized = (methodArn: string, groups: TGroup[]): boolean => {
