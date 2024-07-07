@@ -83,6 +83,7 @@ export class ApiStack extends cdk.Stack {
     );
     props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
     newMediaTopic.grantPublish(uploadMetadataFunction);
+    props.contentBucket.grantRead(uploadMetadataFunction);
 
     const getMetadataFunction = new NodejsFunction(
       this,
@@ -473,6 +474,7 @@ export class ApiStack extends cdk.Stack {
       },
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
+      ...corsOptions
     });
 
     mediaId.addMethod('DELETE', deleteMetadataFunctionIntegration, {
