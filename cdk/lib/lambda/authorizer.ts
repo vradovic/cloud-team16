@@ -29,7 +29,7 @@ const isAuthorized = (methodArn: string, groups: TGroup[]): boolean => {
     if (
       paths[group].some((path) => {
         console.log(`Testing ${path}`);
-        path.test(methodArn);
+        return path.test(methodArn);
       })
     ) {
       return true;
