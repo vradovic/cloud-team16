@@ -47,8 +47,7 @@ export const handler = async (
     };
   }
 
-  const username: string =
-    event.requestContext.authorizer?.claims['cognito:username'];
+  const username: string = event.requestContext.authorizer?.username;
   if (!username) {
     return {
       statusCode: 400,

@@ -15,8 +15,7 @@ const docClient = DynamoDBDocumentClient.from(client);
 export const handler = async (
   event: APIGatewayEvent,
 ): Promise<APIGatewayProxyResult> => {
-  const username: string =
-    event.requestContext.authorizer?.claims['cognito:username'];
+  const username: string = event.requestContext.authorizer?.claims.username;
   if (!username) {
     return {
       statusCode: 400,
