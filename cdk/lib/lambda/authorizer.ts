@@ -21,11 +21,11 @@ type TGroup = 'users' | 'admins';
 // Regex for method arns in api gateway
 const paths: Record<TGroup, RegExp[]> = {
   users: [
-    /GET\/media.+/,
+    /GET\/media.*/,
     /(GET|POST|DELETE)\/media\/.+\/rating/,
     /(GET|POST|DELETE)\/subscriptions/,
   ],
-  admins: [/(GET|POST|PUT|DELETE)\/media.+/],
+  admins: [/(GET|POST|PUT|DELETE)\/media.*/],
 };
 
 const isAuthorized = (methodArn: string, groups: TGroup[]): boolean => {
