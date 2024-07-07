@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import { Effect, PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Construct } from 'constructs';
@@ -90,7 +91,13 @@ export class AuthStack extends cdk.Stack {
         REGION: this.region,
       },
     });
-    userPool.grant(postSignUpFunction, 'cognito-idp:AdminAddUserToGroup');
+    postSignUpFunction.addToRolePolicy(
+      new PolicyStatement({
+        effect: Effect.ALLOW,
+        actions: ['cognito-idp:AdminAddUserToGroup'],
+        resources: [userPool.userPoolArn],
+      }),
+    );
     userPool.addTrigger(
       cognito.UserPoolOperation.POST_CONFIRMATION,
       postSignUpFunction,
