@@ -82,21 +82,6 @@ export class ApiStack extends cdk.Stack {
     props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
     newMediaTopic.grantPublish(uploadMetadataFunction);
 
-    const getMetadataFunction = new NodejsFunction(
-      this,
-      'getMetadataFunction',
-      {
-        runtime: Runtime.NODEJS_20_X,
-        entry: path.join(__dirname, './lambda/get-metadata.ts'),
-        handler: 'handler',
-        environment: {
-          TABLE_NAME: props.contentMetadataTable.tableName,
-          REGION: this.region,
-        },
-      },
-    );
-    props.contentMetadataTable.grantReadData(getMetadataFunction);
-
     const deleteMetadataFunction = new NodejsFunction(
       this,
       'deleteMetadataFunction',
@@ -369,12 +354,6 @@ export class ApiStack extends cdk.Stack {
         proxy: true,
       },
     );
-
-    const filterResource = api.root.addResource('filter');
-    filterResource.addMethod('GET', filterMetadataFunctionIntegration, {
-      authorizer,
-      authorizationType: AuthorizationType.CUSTOM,
-    });
 
     const getIntegration = new AwsIntegration({
       service: 's3',
