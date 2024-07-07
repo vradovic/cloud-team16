@@ -82,21 +82,6 @@ export class ApiStack extends cdk.Stack {
     props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
     newMediaTopic.grantPublish(uploadMetadataFunction);
 
-    const getMetadataFunction = new NodejsFunction(
-      this,
-      'getMetadataFunction',
-      {
-        runtime: Runtime.NODEJS_20_X,
-        entry: path.join(__dirname, './lambda/get-metadata.ts'),
-        handler: 'handler',
-        environment: {
-          TABLE_NAME: props.contentMetadataTable.tableName,
-          REGION: this.region,
-        },
-      },
-    );
-    props.contentMetadataTable.grantReadData(getMetadataFunction);
-
     const deleteMetadataFunction = new NodejsFunction(
       this,
       'deleteMetadataFunction',
@@ -292,13 +277,6 @@ export class ApiStack extends cdk.Stack {
       },
     );
 
-    const getMetadataFunctionIntegration = new LambdaIntegration(
-      getMetadataFunction,
-      {
-        proxy: true,
-      },
-    );
-
     const deleteMetadataFunctionIntegration = new LambdaIntegration(
       deleteMetadataFunction,
       {
@@ -354,6 +332,28 @@ export class ApiStack extends cdk.Stack {
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
     });
+
+    const filterMetadataFunction = new NodejsFunction(
+      this,
+      'filterMetadataFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/filter-content.ts'),
+        handler: 'handler',
+        environment: {
+          TABLE_NAME: props.contentMetadataTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+    props.contentMetadataTable.grantReadData(filterMetadataFunction);
+
+    const filterMetadataFunctionIntegration = new LambdaIntegration(
+      filterMetadataFunction,
+      {
+        proxy: true,
+      },
+    );
 
     const getIntegration = new AwsIntegration({
       service: 's3',
@@ -480,7 +480,7 @@ export class ApiStack extends cdk.Stack {
       authorizationType: AuthorizationType.CUSTOM,
     });
 
-    mediaResource.addMethod('GET', getMetadataFunctionIntegration, {
+    mediaResource.addMethod('GET', filterMetadataFunctionIntegration, {
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
     });

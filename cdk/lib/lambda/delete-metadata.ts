@@ -1,13 +1,10 @@
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { DynamoDBClient, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
-import { APIGatewayProxyHandler } from "aws-lambda";
+import { DynamoDBClient, DeleteItemCommand } from '@aws-sdk/client-dynamodb';
+import { APIGatewayProxyHandler } from 'aws-lambda';
 
 const REGION = process.env.REGION!;
 const TABLE_NAME = process.env.TABLE_NAME!;
 
-const dynamoDBClient = new DynamoDBClient({ region: REGION});
-
-
+const dynamoDBClient = new DynamoDBClient({ region: REGION });
 
 export const handler: APIGatewayProxyHandler = async (event) => {
   const movieId = event.pathParameters?.movieId;
@@ -15,7 +12,7 @@ export const handler: APIGatewayProxyHandler = async (event) => {
   if (!movieId) {
     return {
       statusCode: 400,
-      body: JSON.stringify({ message: "Missing movie ID" }),
+      body: JSON.stringify({ message: 'Missing movie ID' }),
     };
   }
 
@@ -23,13 +20,15 @@ export const handler: APIGatewayProxyHandler = async (event) => {
     await deleteMovie(movieId);
     return {
       statusCode: 200,
-      body: JSON.stringify({ message: `Movie with ID ${movieId} deleted successfully.` }),
+      body: JSON.stringify({
+        message: `Movie with ID ${movieId} deleted successfully.`,
+      }),
     };
   } catch (error) {
     console.error(`Error deleting movie with ID ${movieId}:`, error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ message: "Internal Server Error" }),
+      body: JSON.stringify({ message: 'Internal Server Error' }),
     };
   }
 };
@@ -37,8 +36,6 @@ export const handler: APIGatewayProxyHandler = async (event) => {
 async function deleteMovie(movieId: string) {
   await deleteFromDynamoDB(movieId);
 }
-
-
 
 async function deleteFromDynamoDB(movieId: string) {
   const deleteItemCommand = new DeleteItemCommand({
