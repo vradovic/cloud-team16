@@ -30,4 +30,6 @@ export const handler: PostConfirmationTriggerHandler = async (
   } catch (error) {
     console.error('Failed to add user to group');
   }
+
+  return event;
 };
