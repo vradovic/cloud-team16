@@ -156,6 +156,7 @@ export class ApiStack extends cdk.Stack {
         REGION: this.region,
       },
     });
+
     props.userFeedTable.grantWriteData(updateFeedFunction);
     props.contentMetadataTable.grantReadData(updateFeedFunction);
     props.ratingTable.grantReadData(updateFeedFunction);
