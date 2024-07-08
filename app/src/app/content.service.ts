@@ -32,4 +32,12 @@ export class ContentService {
     headers.append('Content-Type', 'application/json');
     return this.http.put(environment.apiUrl + `/media/${metadata.mediaId}`, metadata, { headers });
   }
+
+  deleteVideo(mediaId: string) {
+    return this.http.delete(environment.apiUrl + `/media/${mediaId}/content`);
+  }
+
+  removeMetadata(mediaId: string) {
+    return this.http.delete(environment.apiUrl + `/media/${mediaId}`);
+  }
 }
