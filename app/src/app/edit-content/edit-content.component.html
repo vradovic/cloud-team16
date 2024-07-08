@@ -1,0 +1,59 @@
+<h2>Edit content</h2>
+<form [formGroup]="contentForm" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="title">Title:</label>
+    <input id="title" formControlName="title" type="text" readonly />
+  </div>
+
+  <div>
+    <label for="description">Description:</label>
+    <textarea id="description" formControlName="description"></textarea>
+  </div>
+
+  <div>
+    <label for="actors">Actors (comma-separated):</label>
+    <input id="actors" formControlName="actors" type="text" />
+  </div>
+
+  <div>
+    <label for="directors">Directors (comma-separated):</label>
+    <input id="directors" formControlName="directors" type="text" />
+  </div>
+
+  <div>
+    <label for="genres">Genres (comma-separated):</label>
+    <input id="genres" formControlName="genres" type="text" />
+  </div>
+
+  <div>
+    <label for="releaseYear">Release Year:</label>
+    <input id="releaseYear" formControlName="releaseYear" type="number" />
+  </div>
+
+  <div>
+    <label for="fileType">File Type:</label>
+    <input id="fileType" formControlName="fileType" type="text" readonly />
+  </div>
+
+  <div>
+    <label for="fileSize">File Size:</label>
+    <input id="fileSize" formControlName="fileSize" type="text" readonly />
+  </div>
+
+  <div>
+    <label for="creationTime">Creation Time:</label>
+    <input id="creationTime" formControlName="creationTime" type="text" readonly />
+  </div>
+
+  <div>
+    <label for="lastModifiedTime">Last Modified Time:</label>
+    <input id="lastModifiedTime" formControlName="lastModifiedTime" type="text" readonly />
+  </div>
+
+  <div>
+    <label for="file">Upload New Video:</label>
+    <input id="file" type="file" (change)="onFileChange($event)" />
+  </div>
+
+  <button type="submit">Update Content</button>
+</form>

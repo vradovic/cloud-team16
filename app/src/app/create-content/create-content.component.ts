@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CreateContentService } from '../create-content.service';
+import { ContentService } from '../content.service';
 import { IMetadata } from '../model/metadata.model';
 import { CognitoService } from '../cognito.service';
 import { CommonModule } from '@angular/common';
@@ -32,7 +32,7 @@ export class CreateContentComponent {
   years: number[] = [];
 
   constructor(
-    private createContentService: CreateContentService,
+    private contentService: ContentService,
     private cognitoService: CognitoService,
   ) 
   {
@@ -79,7 +79,7 @@ export class CreateContentComponent {
     }
 
     // Call your service method to upload video and metadata
-    this.createContentService.uploadContent(this.mediaId, this.videoFile)
+    this.contentService.uploadContent(this.mediaId, this.videoFile)
       .subscribe(
         () => {
           console.log('Video uploaded successfully');
@@ -93,7 +93,7 @@ export class CreateContentComponent {
         }
       );
 
-    this.createContentService.uploadMetadata(this.videoMetadata)
+    this.contentService.uploadMetadata(this.videoMetadata)
       .subscribe(
         () => {
           console.log("Video metadata uploaded successfully");

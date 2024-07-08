@@ -23,7 +23,18 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     }
 
     const body = JSON.parse(event.body);
-    const { title, description, actors, directors, genres, releaseYear } = body;
+    const {
+      title,
+      description,
+      actors,
+      directors,
+      genres,
+      releaseYear,
+      fileType,
+      fileSize,
+      creationTime,
+      lastModifiedTime
+    } = body;
 
     // Build the update expression and expression attribute values dynamically
     let updateExpression = 'SET';
@@ -52,6 +63,22 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     if (releaseYear !== undefined) {
       updateExpression += ' releaseYear = :releaseYear,';
       expressionAttributeValues[':releaseYear'] = { N: releaseYear.toString() };
+    }
+    if (fileType !== undefined) {
+      updateExpression += ' fileType = :fileType,';
+      expressionAttributeValues[':fileType'] = { S: fileType };
+    }
+    if (fileSize !== undefined) {
+      updateExpression += ' fileSize = :fileSize,';
+      expressionAttributeValues[':fileSize'] = { N: fileSize.toString() };
+    }
+    if (creationTime !== undefined) {
+      updateExpression += ' creationTime = :creationTime,';
+      expressionAttributeValues[':creationTime'] = { S: creationTime };
+    }
+    if (lastModifiedTime !== undefined) {
+      updateExpression += ' lastModifiedTime = :lastModifiedTime,';
+      expressionAttributeValues[':lastModifiedTime'] = { S: lastModifiedTime };
     }
 
     // Remove the trailing comma from the update expression
