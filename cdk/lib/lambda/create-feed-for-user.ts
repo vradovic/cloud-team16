@@ -1,9 +1,9 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
-  PutCommand,
   QueryCommand,
   ScanCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
@@ -19,7 +19,7 @@ export const handler = async (
 ): Promise<APIGatewayProxyResult> => {
   console.log('Received event:', JSON.stringify(event, null, 2));
 
-  let username;
+  let username: string | undefined;
   try {
     username = event.requestContext.authorizer?.username;
     console.log('Username:', username);
@@ -38,7 +38,7 @@ export const handler = async (
     };
   }
 
-  // Check if the user feed is empty
+  // Check if the user feed already has items
   const userFeedParams = {
     TableName: USER_FEED_TABLE,
     KeyConditionExpression: 'username = :username',
@@ -61,7 +61,7 @@ export const handler = async (
     };
   }
 
-  if (userFeedResult.Count > 0) {
+  if (userFeedResult.Count && userFeedResult.Count > 0) {
     return {
       statusCode: 200,
       body: JSON.stringify({ message: 'User feed already populated' }),
@@ -87,7 +87,9 @@ export const handler = async (
     };
   }
 
-  const contentItems = contentResult.Items || [];
+  const contentItems: { movieId: string }[] = contentResult.Items as {
+    movieId: string;
+  }[];
   if (contentItems.length === 0) {
     return {
       statusCode: 400,
@@ -95,25 +97,27 @@ export const handler = async (
     };
   }
 
-  // Write each item to the user feed table
+  // Extract all movieId values and create a concatenated string
+  const movieIds = contentItems.map((item) => item.movieId).join(',');
+
+  // Update the user feed table with the concatenated string of movieId values
+  const updateParams = {
+    TableName: USER_FEED_TABLE,
+    Key: { username },
+    UpdateExpression: 'SET movie_ids = :movie_ids',
+    ExpressionAttributeValues: {
+      ':movie_ids': movieIds,
+    },
+  };
+
   try {
-    for (const item of contentItems) {
-      const putParams = {
-        TableName: USER_FEED_TABLE,
-        Item: {
-          username,
-          movie_id: item.movieId,
-          ...item,
-        },
-      };
-      await docClient.send(new PutCommand(putParams));
-    }
+    await docClient.send(new UpdateCommand(updateParams));
   } catch (error) {
-    console.error('Error writing to user feed table:', error);
+    console.error('Error updating user feed table:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message: 'Internal server error writing to user feed table',
+        message: 'Internal server error updating user feed table',
       }),
     };
   }
