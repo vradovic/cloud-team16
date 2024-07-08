@@ -19,6 +19,13 @@
       <li>{{ director }}</li>
     }
   </ul>
+  <select [(ngModel)]="rating">
+    <option>none</option>
+    <option>love</option>
+    <option>like</option>
+    <option>dislike</option>
+  </select>
+  <button (click)="updateRating()">Update rating</button>
 } @else {
   <p>No metadata for this media</p>
 }
