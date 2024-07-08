@@ -1,20 +1,23 @@
 import * as cdk from 'aws-cdk-lib';
+import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import {
   AttributeType,
-  ProjectionType,
-  Table,
-  ITable,
   BillingMode,
+  ITable,
+  ProjectionType,
+  StreamViewType,
+  Table,
 } from 'aws-cdk-lib/aws-dynamodb';
 import { Bucket, IBucket } from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
-import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 
 export class StorageStack extends cdk.Stack {
   public readonly contentBucket: IBucket;
   public readonly contentMetadataTable: ITable;
   public readonly subscriptionsTable: ITable;
   public readonly ratingTable: ITable;
+  public readonly userFeedTable: ITable;
+  public readonly downloadsTable: ITable;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -102,6 +105,43 @@ export class StorageStack extends cdk.Stack {
       billingMode: BillingMode.PROVISIONED,
       readCapacity: 1,
       writeCapacity: 1,
+    });
+
+    const userFeedTable = new Table(this, 'userFeedTable', {
+      partitionKey: {
+        name: 'username',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'movie_id',
+        type: AttributeType.STRING,
+      },
+      billingMode: BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1,
+    });
+
+    userFeedTable.addGlobalSecondaryIndex({
+      indexName: 'feedIndex',
+      partitionKey: { name: 'username', type: dynamodb.AttributeType.STRING },
+      projectionType: ProjectionType.ALL,
+    });
+
+    this.userFeedTable = userFeedTable;
+
+    this.downloadsTable = new Table(this, 'downloadsTable', {
+      partitionKey: {
+        name: 'username',
+        type: AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'movie_id',
+        type: AttributeType.STRING,
+      },
+      billingMode: BillingMode.PROVISIONED,
+      readCapacity: 1,
+      writeCapacity: 1,
+      stream: StreamViewType.NEW_IMAGE,
     });
   }
 }

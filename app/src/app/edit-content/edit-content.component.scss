@@ -1,0 +1,58 @@
+/* General styles for the form */
+:host {
+    display: block;
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+  }
+  
+  form {
+    border: 1px solid #ccc;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+  
+  label {
+    font-weight: bold;
+  }
+  
+  textarea,
+  input[type='text'],
+  input[type='number'],
+  input[type='file'],
+  select,
+  button {
+    width: calc(100% - 20px); /* Adjust to fit container padding */
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  textarea {
+    min-height: 100px; /* Adjust as needed */
+  }
+  
+  button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  .error-message {
+    color: #dc3545;
+    margin-top: 10px;
+  }
+  

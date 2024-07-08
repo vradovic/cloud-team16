@@ -5,16 +5,19 @@ import {
   PutCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
+
+const REGION = process.env.REGION!;
+const TABLE_NAME = process.env.TABLE_NAME!;
+const UPDATE_FEED_FUNCTION = process.env.UPDATE_FEED_FUNCTION!;
+
+const client = new DynamoDBClient({ region: REGION });
+const docClient = DynamoDBDocumentClient.from(client);
+const lambdaClient = new LambdaClient({ region: REGION });
 
 interface IBody {
   topic?: string;
 }
-
-const REGION = process.env.REGION!;
-const TABLE_NAME = process.env.TABLE_NAME!;
-
-const client = new DynamoDBClient({ region: REGION });
-const docClient = DynamoDBDocumentClient.from(client);
 
 export const handler = async (
   event: APIGatewayEvent,
@@ -28,9 +31,10 @@ export const handler = async (
     }
 
     const { topic } = JSON.parse(event.body) as IBody;
+    const username = event.requestContext.authorizer?.username;
     const email = event.requestContext.authorizer?.email;
 
-    if (!topic || !email) {
+    if (!topic || !username || !email) {
       return {
         statusCode: 400,
         body: 'Missing required fields',
@@ -47,6 +51,9 @@ export const handler = async (
 
     await docClient.send(new PutCommand(params));
 
+    // Poziv funkciji za ažuriranje feeda
+    await updateFeed(username, email);
+
     return {
       statusCode: 201,
       body: JSON.stringify({ topic, email }),
@@ -59,4 +66,13 @@ export const handler = async (
       body: 'Internal server error',
     };
   }
+};
+
+const updateFeed = async (username: string, email: string) => {
+  const params = {
+    FunctionName: UPDATE_FEED_FUNCTION,
+    InvocationType: 'Event',
+    Payload: JSON.stringify({ username, email }),
+  };
+  await lambdaClient.send(new InvokeCommand(params));
 };

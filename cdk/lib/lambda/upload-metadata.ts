@@ -1,10 +1,7 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
-import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-
 
 const REGION = process.env.REGION!;
 const tableName = process.env.TABLE_NAME!;
@@ -14,12 +11,13 @@ const client = new DynamoDBClient({ region: REGION });
 const dynamoDb = DynamoDBDocumentClient.from(client);
 const sns = new SNSClient({ region: REGION });
 
-export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-
+export const handler = async (
+  event: APIGatewayProxyEvent,
+): Promise<APIGatewayProxyResult> => {
   if (!event.pathParameters || !event.pathParameters.movieId) {
     return {
       statusCode: 400,
-      body: JSON.stringify({message: "Missing movieId in path parameters"}),
+      body: JSON.stringify({ message: 'Missing movieId in path parameters' }),
     };
   }
 
@@ -44,7 +42,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     fileType,
     fileSize,
     creationTime,
-    lastModifiedTime
+    lastModifiedTime,
   } = body;
 
   // Convert lists to concatenated strings
@@ -53,8 +51,6 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const genresString = Array.isArray(genres) ? genres.join(', ') : '';
 
   try {
-
-
     const metadata = {
       movieId,
       title,
@@ -71,7 +67,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
 
     const params = {
       TableName: tableName,
-      Item: metadata
+      Item: metadata,
     };
 
     await dynamoDb.send(new PutCommand(params));

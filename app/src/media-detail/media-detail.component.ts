@@ -2,9 +2,10 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { IMetadata } from '../app/model/metadata.model';
 import { MediaService } from '../media.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RatingService } from '../app/rating.service';
 import { FormsModule } from '@angular/forms';
+import { ContentService } from '../app/content.service';
 import { FileSaverModule, FileSaverService } from 'ngx-filesaver';
 
 @Component({
@@ -23,6 +24,8 @@ export class MediaDetailComponent implements OnInit {
     private mediaService: MediaService,
     private ratingService: RatingService,
     private route: ActivatedRoute,
+    private router: Router,
+    private contentService: ContentService,
     private fileSaverService: FileSaverService,
   ) {}
 
@@ -60,6 +63,11 @@ export class MediaDetailComponent implements OnInit {
       });
   }
 
+
+  editContent(mediaId: string) {
+    this.router.navigate(['/edit-content', mediaId]);
+  }
+  
   downloadContent() {
     this.mediaService.getContent(this.id).subscribe((blob) => {
       this.fileSaverService.save(blob, 'download');
