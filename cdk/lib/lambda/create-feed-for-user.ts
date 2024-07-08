@@ -71,6 +71,7 @@ export const handler = async (
   // Fetch all content metadata
   const contentParams = {
     TableName: CONTENT_METADATA_TABLE,
+    ProjectionExpression: 'movieId', // Only fetch movieId to reduce data transfer
   };
 
   let contentResult;
@@ -87,9 +88,7 @@ export const handler = async (
     };
   }
 
-  const contentItems: { movieId: string }[] = contentResult.Items as {
-    movieId: string;
-  }[];
+  const contentItems = contentResult.Items || [];
   if (contentItems.length === 0) {
     return {
       statusCode: 400,
@@ -98,7 +97,9 @@ export const handler = async (
   }
 
   // Extract all movieId values and create a concatenated string
-  const movieIds = contentItems.map((item) => item.movieId).join(',');
+  const movieIds = contentItems
+    .map((item: { movieId: string }) => item.movieId)
+    .join(',');
 
   // Update the user feed table with the concatenated string of movieId values
   const updateParams = {
