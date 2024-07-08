@@ -9,12 +9,10 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 const REGION = process.env.REGION!;
 const tableName = process.env.TABLE_NAME!;
 const TOPIC_ARN = process.env.TOPIC_ARN!;
-const BUCKET_NAME = process.env.BUCKET_NAME!;
 
 const client = new DynamoDBClient({ region: REGION });
 const dynamoDb = DynamoDBDocumentClient.from(client);
 const sns = new SNSClient({ region: REGION });
-const s3Client = new S3Client({ region: REGION });
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
 
@@ -43,6 +41,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     directors,
     genres,
     releaseYear,
+    fileType,
+    fileSize,
+    creationTime,
+    lastModifiedTime
   } = body;
 
   // Convert lists to concatenated strings
@@ -50,23 +52,8 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const directorsString = Array.isArray(directors) ? directors.join(', ') : '';
   const genresString = Array.isArray(genres) ? genres.join(', ') : '';
 
-  const s3Params = {
-    Bucket: BUCKET_NAME,
-    Key: `${movieId}`
-  };
-
-
   try {
 
-    const fileObject = await s3Client.send(new GetObjectCommand(s3Params));
-
-    const fileMetadata = {
-      filename: s3Params.Key,
-      fileType: fileObject.ContentType,
-      fileSize: fileObject.ContentLength,
-      creationTime: fileObject.LastModified?.toISOString(),
-      lastModifiedTime: fileObject.LastModified?.toISOString()
-    };
 
     const metadata = {
       movieId,
@@ -76,7 +63,10 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
       directors: directorsString,
       genres: genresString,
       releaseYear: releaseYear,
-      ...fileMetadata
+      fileType,
+      fileSize,
+      creationTime,
+      lastModifiedTime,
     };
 
     const params = {

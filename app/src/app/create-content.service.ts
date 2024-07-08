@@ -1,6 +1,8 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../environments/environment.development';
+import { IMetadata } from './model/metadata.model';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -9,23 +11,15 @@ export class CreateContentService {
 
   constructor(private http: HttpClient) { }
 
-  uploadContent(mediaId: string, file: File): Promise<void> {
-    const formData = new FormData();
-    formData.append('file', file);
+  uploadContent(mediaId: string, file: File): Observable<any> {
 
-    const headers = new HttpHeaders({
-      'Content-Type': 'multipart/form-data'
-    });
+    const headers = new HttpHeaders();
+    headers.append('Content-Type', 'video/mp4');
 
-    // Replace 'YOUR_API_ENDPOINT' with your actual API endpoint
-    return this.http.post(environment.apiUrl + `media/${mediaId}`, formData, { headers })
-      .toPromise()
-      .then(() => {
-        console.log('Video uploaded successfully');
-      })
-      .catch(error => {
-        console.error('Error uploading video:', error);
-        throw error; // Rethrow or handle the error as needed
-      });
+    return this.http.post(environment.apiUrl + `media/${mediaId}/content`, file, { headers });
+  }
+
+  uploadMetadata(metadata: IMetadata) {
+    return this.http.post(environment.apiUrl + `media/${metadata.mediaId}`, metadata);
   }
 }
