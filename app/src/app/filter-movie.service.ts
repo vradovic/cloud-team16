@@ -4,10 +4,11 @@ import { environment } from '../environments/environment';
 import { Observable } from 'rxjs';
 
 interface Movie {
+  movieId: string;
   title: string;
-  genres: string;
-  directors: string;
-  actors: string;
+  genres: string[];
+  directors: string[];
+  actors: string[];
   releaseYear: number;
 }
 

@@ -1,14 +1,15 @@
 import { Component } from '@angular/core';
-
+import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FilterMoviesService } from '../filter-movie.service';
 
 interface Movie {
+  movieId: string;
   title: string;
-  genres: string;
-  directors: string;
-  actors: string;
+  genres: string[];
+  directors: string[];
+  actors: string[];
   releaseYear: number;
 }
 
@@ -23,7 +24,10 @@ export class FiltersComponent {
   results: Movie[] = [];
   filterError: string | null = null;
 
-  constructor(private filterMoviesService: FilterMoviesService) {}
+  constructor(
+    private filterMoviesService: FilterMoviesService,
+    private router: Router,
+  ) {}
 
   submitForm(form: NgForm): void {
     const { title, genres, directors, actors, releaseYear } = form.value;
@@ -54,5 +58,9 @@ export class FiltersComponent {
         this.filterError = 'Failed to fetch data. Please try again.';
       },
     );
+  }
+
+  viewMovie(movieId: string): void {
+    this.router.navigate(['/media', movieId]);
   }
 }

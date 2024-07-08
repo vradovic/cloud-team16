@@ -33,8 +33,10 @@
     <h3>Results:</h3>
     <ul>
       <li *ngFor="let item of results">
-        Title: {{ item.title }}, Genres: {{ item.genres }}, Directors:
-        {{ item.directors }}, Actors: {{ item.actors }}
+        Title: {{ item.title }}, Genres: {{ item.genres.join(', ') }},
+        Directors: {{ item.directors.join(', ') }}, Actors:
+        {{ item.actors.join(', ') }}, Release Year: {{ item.releaseYear }}
+        <button (click)="viewMovie(item.movieId)">View</button>
       </li>
     </ul>
   </div>
