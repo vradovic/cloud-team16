@@ -15,4 +15,10 @@ export class MediaService {
   getMetadata(mediaId: string): Observable<IMetadata> {
     return this.http.get<IMetadata>(`${this.URL}/${mediaId}`);
   }
+
+  getContent(mediaId: string) {
+    return this.http.get(`${this.URL}/${mediaId}/content`, {
+      responseType: 'blob',
+    });
+  }
 }
