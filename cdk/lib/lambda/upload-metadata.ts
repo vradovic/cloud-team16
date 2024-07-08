@@ -1,6 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { PublishCommand, SNSClient } from '@aws-sdk/client-sns';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 
@@ -13,6 +15,16 @@ const dynamoDb = DynamoDBDocumentClient.from(client);
 const sns = new SNSClient({ region: REGION });
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+
+  if (!event.pathParameters || !event.pathParameters.movieId) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({message: "Missing movieId in path parameters"}),
+    };
+  }
+
+  const movieId = event.pathParameters.movieId;
+
   if (!event.body) {
     return {
       statusCode: 400,
@@ -23,13 +35,16 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const body = JSON.parse(event.body);
 
   const {
-    movieId,
     title,
     description,
     actors,
     directors,
     genres,
     releaseYear,
+    fileType,
+    fileSize,
+    creationTime,
+    lastModifiedTime
   } = body;
 
   // Convert lists to concatenated strings
@@ -37,25 +52,28 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const directorsString = Array.isArray(directors) ? directors.join(', ') : '';
   const genresString = Array.isArray(genres) ? genres.join(', ') : '';
 
-  const metadata = body;
+  try {
 
 
-
-  const params = {
-    TableName: tableName,
-    Item: {
-
+    const metadata = {
       movieId,
       title,
       description,
       actors: actorsString,
       directors: directorsString,
       genres: genresString,
-      releaseYear,
-    },
-  };
+      releaseYear: releaseYear,
+      fileType,
+      fileSize,
+      creationTime,
+      lastModifiedTime,
+    };
 
-  try {
+    const params = {
+      TableName: tableName,
+      Item: metadata
+    };
+
     await dynamoDb.send(new PutCommand(params));
 
     const result = await sns.send(

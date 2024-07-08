@@ -5,4 +5,9 @@ export interface IMetadata {
   genres: string[];
   actors: string[];
   directors: string[];
+  releaseYear: number | null;
+  fileType: string; 
+  fileSize: number; 
+  creationTime: string | null; 
+  lastModifiedTime: string | null;
 }

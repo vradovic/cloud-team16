@@ -1,0 +1,31 @@
+<div>
+  <h2>Create New Content</h2>
+  <form #contentForm="ngForm" (ngSubmit)="submitForm(contentForm)">
+
+    <label for="videoFile">Video File:</label><br>
+    <input type="file" id="videoFile" name="videoFile" accept="video/*" (change)="onFileSelected($event)" required><br><br>
+
+    <label for="description">Description:</label><br>
+    <textarea id="description" name="description" ngModel></textarea><br><br>
+
+    <label for="actors">Actors (comma-separated):</label><br>
+    <input type="text" id="actors" name="actors" ngModel><br><br>
+
+    <label for="directors">Directors (comma-separated):</label><br>
+    <input type="text" id="directors" name="directors" ngModel><br><br>
+
+    <label for="genres">Genres (comma-separated):</label><br>
+    <input type="text" id="genres" name="genres" ngModel><br><br>
+
+    <label for="releaseYear">Release Year:</label><br>
+    <select id="releaseYear" name="releaseYear" ngModel>
+      <option *ngFor="let year of years" [value]="year">{{ year }}</option>
+    </select><br><br>
+
+    <button type="submit">Submit</button>
+    <div *ngIf="uploadError" class="error-message">
+      {{ uploadError }}
+    </div>
+    
+  </form>
+</div>

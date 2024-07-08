@@ -35,6 +35,7 @@
     "aws-cdk-lib": "2.147.0",
     "aws-jwt-verify": "^4.0.1",
     "constructs": "^10.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "multipart-form-parser": "^1.1.2",
     "source-map-support": "^0.5.21",
