@@ -18,7 +18,6 @@ import {
   ServicePrincipal,
 } from 'aws-cdk-lib/aws-iam';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
-import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { IBucket } from 'aws-cdk-lib/aws-s3';
 import { Topic } from 'aws-cdk-lib/aws-sns';
@@ -26,6 +25,7 @@ import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { Queue } from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 import path from 'path';
+import { SqsEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
 
 export interface ApiStackProps {
   contentBucket: IBucket;
@@ -33,6 +33,8 @@ export interface ApiStackProps {
   subscriptionsTable: ITable;
   userPool: IUserPool;
   ratingTable: ITable;
+  userFeedTable: ITable;
+  downloadsTable: ITable;
   sourceEmail: string;
   userPoolClient: IUserPoolClient;
 }
@@ -111,6 +113,7 @@ export class ApiStack extends cdk.Stack {
     );
 
     props.contentMetadataTable.grantWriteData(deleteMetadataFunction);
+    props.contentMetadataTable.grantWriteData(editMetadataFunction);
 
     const getMediaFunction = new NodejsFunction(this, 'GetMediaFunction', {
       runtime: Runtime.NODEJS_20_X,
@@ -139,7 +142,25 @@ export class ApiStack extends cdk.Stack {
     );
 
     props.contentBucket.grantDelete(deleteVideoFunction);
-    props.contentMetadataTable.grantWriteData(editMetadataFunction);
+
+    const updateFeedFunction = new NodejsFunction(this, 'updateFeedFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, './lambda/update-feed.ts'),
+      handler: 'handler',
+      environment: {
+        USER_FEED_TABLE: props.userFeedTable.tableName,
+        CONTENT_METADATA_TABLE: props.contentMetadataTable.tableName,
+        RATING_TABLE: props.ratingTable.tableName,
+        SUBSCRIPTIONS_TABLE: props.subscriptionsTable.tableName,
+        DOWNLOADS_TABLE: props.downloadsTable.tableName,
+        REGION: this.region,
+      },
+    });
+    props.userFeedTable.grantWriteData(updateFeedFunction);
+    props.contentMetadataTable.grantReadData(updateFeedFunction);
+    props.ratingTable.grantReadData(updateFeedFunction);
+    props.subscriptionsTable.grantReadData(updateFeedFunction);
+    props.downloadsTable.grantReadData(updateFeedFunction);
 
     const createSubscriptionFunction = new NodejsFunction(
       this,
@@ -151,6 +172,7 @@ export class ApiStack extends cdk.Stack {
         environment: {
           TABLE_NAME: props.subscriptionsTable.tableName,
           REGION: this.region,
+          UPDATE_FEED_FUNCTION: updateFeedFunction.functionName,
         },
       },
     );
@@ -197,6 +219,7 @@ export class ApiStack extends cdk.Stack {
         environment: {
           REGION: this.region,
           TABLE_NAME: props.ratingTable.tableName,
+          UPDATE_FEED_FUNCTION: updateFeedFunction.functionName,
         },
       },
     );
@@ -306,7 +329,7 @@ export class ApiStack extends cdk.Stack {
         proxy: true,
       },
     );
-    const editMetadataFunctionIntegreation = new LambdaIntegration(
+    const editMetadataFunctionIntegration = new LambdaIntegration(
       editMetadataFunction,
       {
         proxy: true,
@@ -499,7 +522,7 @@ export class ApiStack extends cdk.Stack {
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
     });
-    mediaId.addMethod('PUT', editMetadataFunctionIntegreation, {
+    mediaId.addMethod('PUT', editMetadataFunctionIntegration, {
       requestParameters: {
         'method.request.path.movieId': true,
         'method.request.header.Content-Type': true,
@@ -509,6 +532,84 @@ export class ApiStack extends cdk.Stack {
     });
 
     mediaResource.addMethod('GET', filterMetadataFunctionIntegration, {
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+    });
+
+    const getUserFeedFunction = new NodejsFunction(
+      this,
+      'getUserFeedFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/get-user-feed.ts'),
+        handler: 'handler',
+        environment: {
+          USER_FEED_TABLE: props.userFeedTable.tableName,
+          REGION: this.region,
+        },
+      },
+    );
+    props.userFeedTable.grantReadData(getUserFeedFunction);
+
+    const getUserFeedIntegration = new LambdaIntegration(getUserFeedFunction);
+
+    const userFeedResource = api.root.addResource('user-feed');
+    userFeedResource.addMethod('GET', getUserFeedIntegration, {
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+    });
+
+    const populateFeedFunction = new NodejsFunction(
+      this,
+      'PopulateFeedFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/create-feed-for-user.ts'),
+        handler: 'index.handler',
+        environment: {
+          USER_FEED_TABLE: props.userFeedTable.tableName,
+          CONTENT_METADATA_TABLE: props.contentMetadataTable.tableName,
+        },
+      },
+    );
+
+    props.userFeedTable.grantReadWriteData(populateFeedFunction);
+    props.contentMetadataTable.grantReadWriteData(populateFeedFunction);
+
+    const populateFeedIntegration = new LambdaIntegration(populateFeedFunction);
+
+    userFeedResource.addMethod('POST', populateFeedIntegration, {
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+    });
+
+    const videoTranscodeFunction = new NodejsFunction(
+      this,
+      'videoTranscodeFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/video-transcode.ts'),
+        handler: 'handler',
+        environment: {
+          REGION: this.region,
+          BUCKET_NAME: props.contentBucket.bucketName,
+        },
+      },
+    );
+
+    props.contentBucket.grantReadWrite(videoTranscodeFunction);
+
+    const videoTranscodeFunctionIntegration = new LambdaIntegration(
+      videoTranscodeFunction,
+      {
+        proxy: false,
+      },
+    );
+
+    contentResource.addMethod('PUT', videoTranscodeFunctionIntegration, {
+      requestParameters: {
+        'method.request.path.movieId': true,
+      },
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
     });

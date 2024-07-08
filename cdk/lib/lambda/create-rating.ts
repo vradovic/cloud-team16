@@ -5,12 +5,15 @@ import {
   PutCommandInput,
 } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 const REGION = process.env.REGION!;
 const TABLE_NAME = process.env.TABLE_NAME!;
+const UPDATE_FEED_FUNCTION = process.env.UPDATE_FEED_FUNCTION!;
 
 const client = new DynamoDBClient({ region: REGION });
 const docClient = DynamoDBDocumentClient.from(client);
+const lambdaClient = new LambdaClient({ region: REGION });
 
 type TRating = 'love' | 'like' | 'dislike';
 
@@ -48,10 +51,11 @@ export const handler = async (
   }
 
   const username: string = event.requestContext.authorizer?.username;
-  if (!username) {
+  const email: string = event.requestContext.authorizer?.email;
+  if (!username || !email) {
     return {
       statusCode: 400,
-      body: 'Missing username',
+      body: 'Missing username or email',
     };
   }
 
@@ -85,8 +89,20 @@ export const handler = async (
     };
   }
 
+  // Poziv funkciji za ažuriranje feeda
+  await updateFeed(username, email);
+
   return {
     statusCode: 201,
     body: JSON.stringify(item),
   };
+};
+
+const updateFeed = async (username: string, email: string) => {
+  const params = {
+    FunctionName: UPDATE_FEED_FUNCTION,
+    InvocationType: 'Event',
+    Payload: JSON.stringify({ username, email }),
+  };
+  await lambdaClient.send(new InvokeCommand(params));
 };
