@@ -1,8 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { IRating } from './model/rating.model';
 import { environment } from '../environments/environment';
+import { IRating } from './model/rating.model';
 
 @Injectable({
   providedIn: 'root',
@@ -10,9 +9,19 @@ import { environment } from '../environments/environment';
 export class RatingService {
   constructor(private http: HttpClient) {}
 
-  getRatingForCurrentUser(mediaId: string): Observable<IRating> {
-    return this.http.get<IRating>(
-      `${environment.apiUrl}/media/${mediaId}/rating`,
-    );
+  getUrl(mediaId: string) {
+    return `${environment.apiUrl}/media/${mediaId}/rating`;
+  }
+
+  getRating(mediaId: string) {
+    return this.http.get<IRating>(this.getUrl(mediaId));
+  }
+
+  createRating(mediaId: string, rating: IRating) {
+    return this.http.post<IRating>(this.getUrl(mediaId), rating);
+  }
+
+  deleteRating(mediaId: string) {
+    return this.http.delete<void>(this.getUrl(mediaId));
   }
 }
