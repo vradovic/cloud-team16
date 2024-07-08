@@ -3,7 +3,8 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   ScanCommand,
-  UpdateCommand,
+  BatchWriteCommand,
+  WriteRequest,
 } from '@aws-sdk/lib-dynamodb';
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
@@ -71,7 +72,6 @@ export const handler = async (
   // Fetch all content metadata
   const contentParams = {
     TableName: CONTENT_METADATA_TABLE,
-    ProjectionExpression: 'movieId', // Only fetch movieId to reduce data transfer
   };
 
   let contentResult;
@@ -96,29 +96,53 @@ export const handler = async (
     };
   }
 
-  // Extract all movieId values and create a concatenated string
+  // Extract the first 10 movieId values
   const movieIds = contentItems
-    .map((item: { movieId: string }) => item.movieId)
-    .join(',');
+    .slice(0, 10)
+    .map((item: { movieId: string }) => item.movieId);
 
-  // Update the user feed table with the concatenated string of movieId values
-  const updateParams = {
-    TableName: USER_FEED_TABLE,
-    Key: { username },
-    UpdateExpression: 'SET movie_ids = :movie_ids',
-    ExpressionAttributeValues: {
-      ':movie_ids': movieIds,
+  // Prepare batch write requests to insert each movie ID into the user feed table
+  const putRequests: WriteRequest[] = movieIds.map((movieId: string) => ({
+    PutRequest: {
+      Item: {
+        username,
+        movie_id: movieId,
+      },
     },
-  };
+  }));
+
+  const chunkSize = 25;
+  const chunks: WriteRequest[][] = [];
+  for (let i = 0; i < putRequests.length; i += chunkSize) {
+    chunks.push(putRequests.slice(i, i + chunkSize));
+  }
 
   try {
-    await docClient.send(new UpdateCommand(updateParams));
+    for (const chunk of chunks) {
+      const batchWriteParams = {
+        RequestItems: {
+          [USER_FEED_TABLE]: chunk,
+        },
+      };
+      const batchWriteResult = await docClient.send(
+        new BatchWriteCommand(batchWriteParams),
+      );
+      console.log('Batch write result:', batchWriteResult);
+
+      if (
+        batchWriteResult.UnprocessedItems &&
+        Object.keys(batchWriteResult.UnprocessedItems).length > 0
+      ) {
+        console.warn('Unprocessed items:', batchWriteResult.UnprocessedItems);
+        // Retry logic for unprocessed items can be added here
+      }
+    }
   } catch (error) {
-    console.error('Error updating user feed table:', error);
+    console.error('Error batch writing to user feed table:', error);
     return {
       statusCode: 500,
       body: JSON.stringify({
-        message: 'Internal server error updating user feed table',
+        message: 'Internal server error writing to user feed table',
       }),
     };
   }
