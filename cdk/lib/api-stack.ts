@@ -115,6 +115,18 @@ export class ApiStack extends cdk.Stack {
     props.contentMetadataTable.grantWriteData(deleteMetadataFunction);
     props.contentMetadataTable.grantWriteData(editMetadataFunction);
 
+    const getMediaFunction = new NodejsFunction(this, 'GetMediaFunction', {
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, './lambda/get-metadata.ts'),
+      handler: 'handler',
+      environment: {
+        REGION: this.region,
+        TABLE_NAME: props.contentMetadataTable.tableName,
+      },
+    });
+    props.contentMetadataTable.grantReadData(getMediaFunction);
+    const getMediaIntegration = new LambdaIntegration(getMediaFunction);
+
     const deleteVideoFunction = new NodejsFunction(
       this,
       'deleteVideoFunction',
@@ -348,6 +360,14 @@ export class ApiStack extends cdk.Stack {
     const mediaId = mediaResource.addResource('{movieId}');
     const ratingResource = mediaId.addResource('rating');
     const contentResource = mediaId.addResource('content');
+
+    mediaId.addMethod('GET', getMediaIntegration, {
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+      requestParameters: {
+        'method.request.path.mediaId': true,
+      },
+    });
 
     ratingResource.addMethod('POST', createRatingIntegration, {
       authorizer,

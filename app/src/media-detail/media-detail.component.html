@@ -1,0 +1,31 @@
+@if (metadata) {
+  <h1>{{ metadata.title }}</h1>
+  <p>{{ metadata.description }}</p>
+  <p>Genres:</p>
+  <ul>
+    @for (genre of metadata.genres; track $index) {
+      <li>{{ genre }}</li>
+    }
+  </ul>
+  <p>Actors:</p>
+  <ul>
+    @for (actor of metadata.actors; track $index) {
+      <li>{{ actor }}</li>
+    }
+  </ul>
+  <p>Directors:</p>
+  <ul>
+    @for (director of metadata.directors; track $index) {
+      <li>{{ director }}</li>
+    }
+  </ul>
+  <select [(ngModel)]="rating">
+    <option>none</option>
+    <option>love</option>
+    <option>like</option>
+    <option>dislike</option>
+  </select>
+  <button (click)="updateRating()">Update rating</button>
+} @else {
+  <p>No metadata for this media</p>
+}
