@@ -32,9 +32,15 @@ export const handler = async (event: APIGatewayProxyEvent) => {
 
   try {
     const item = await dynamodb.send(new GetCommand(input));
+    const resp = {
+      ...item.Item,
+      genres: item.Item?.genres.split(', '),
+      actors: item.Item?.actors.split(', '),
+      directors: item.Item?.directors.split(', '),
+    };
     return {
       statusCode: 200,
-      body: JSON.stringify(item.Item),
+      body: JSON.stringify(resp),
     };
   } catch (error) {
     console.error(error);
