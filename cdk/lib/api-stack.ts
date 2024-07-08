@@ -538,18 +538,21 @@ export class ApiStack extends cdk.Stack {
 
     const getUserFeedFunction = new NodejsFunction(
       this,
-      'getUserFeedFunction',
+      'GetUserFeedFunction',
       {
         runtime: Runtime.NODEJS_20_X,
         entry: path.join(__dirname, './lambda/get-user-feed.ts'),
         handler: 'handler',
         environment: {
           USER_FEED_TABLE: props.userFeedTable.tableName,
+          CONTENT_METADATA_TABLE: props.contentMetadataTable.tableName,
           REGION: this.region,
         },
       },
     );
+
     props.userFeedTable.grantReadData(getUserFeedFunction);
+    props.contentMetadataTable.grantReadData(getUserFeedFunction);
 
     const getUserFeedIntegration = new LambdaIntegration(getUserFeedFunction);
 
