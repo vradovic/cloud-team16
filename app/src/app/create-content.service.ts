@@ -1,6 +1,6 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { environment } from '../environments/environment.development';
+import { environment } from '../environments/environment';
 import { IMetadata } from './model/metadata.model';
 import { Observable } from 'rxjs';
 
