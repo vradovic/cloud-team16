@@ -6,11 +6,12 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RatingService } from '../app/rating.service';
 import { FormsModule } from '@angular/forms';
 import { ContentService } from '../app/content.service';
+import { FileSaverModule, FileSaverService } from 'ngx-filesaver';
 
 @Component({
   selector: 'app-media-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, FileSaverModule],
   templateUrl: './media-detail.component.html',
   styleUrl: './media-detail.component.scss',
 })
@@ -25,6 +26,7 @@ export class MediaDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private contentService: ContentService,
+    private fileSaverService: FileSaverService,
   ) {}
 
   ngOnInit() {
@@ -61,7 +63,14 @@ export class MediaDetailComponent implements OnInit {
       });
   }
 
+
   editContent(mediaId: string) {
     this.router.navigate(['/edit-content', mediaId]);
+  }
+  
+  downloadContent() {
+    this.mediaService.getContent(this.id).subscribe((blob) => {
+      this.fileSaverService.save(blob, 'download');
+    });
   }
 }
