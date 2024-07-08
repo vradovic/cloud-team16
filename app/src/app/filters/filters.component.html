@@ -1,1 +1,41 @@
-<p>filters works!</p>
+<div>
+  <h2>Filter Movies</h2>
+  <form #filterForm="ngForm" (ngSubmit)="submitForm(filterForm)">
+    <label for="title">Title:</label><br />
+    <input type="text" id="title" name="title" ngModel /><br /><br />
+
+    <label for="genres">Genres (comma-separated):</label><br />
+    <input type="text" id="genres" name="genres" ngModel /><br /><br />
+
+    <label for="directors">Directors (comma-separated):</label><br />
+    <input type="text" id="directors" name="directors" ngModel /><br /><br />
+
+    <label for="actors">Actors (comma-separated):</label><br />
+    <input type="text" id="actors" name="actors" ngModel /><br /><br />
+
+    <label for="releaseYear">Release Year:</label><br />
+    <input
+      type="number"
+      id="releaseYear"
+      name="releaseYear"
+      ngModel
+    /><br /><br />
+
+    <button type="submit">Filter</button>
+    <button type="button" (click)="clearFilters(filterForm)">Clear</button>
+  </form>
+
+  <div *ngIf="filterError" class="error-message">
+    {{ filterError }}
+  </div>
+
+  <div *ngIf="results.length > 0">
+    <h3>Results:</h3>
+    <ul>
+      <li *ngFor="let item of results">
+        Title: {{ item.title }}, Genres: {{ item.genres }}, Directors:
+        {{ item.directors }}, Actors: {{ item.actors }}
+      </li>
+    </ul>
+  </div>
+</div>
