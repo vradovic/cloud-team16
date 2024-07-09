@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { IMetadata } from '../app/model/metadata.model';
 import { MediaService } from '../media.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -72,5 +72,31 @@ export class MediaDetailComponent implements OnInit {
     this.mediaService.getContent(this.id).subscribe((blob) => {
       this.fileSaverService.save(blob, 'download');
     });
+  }
+
+
+  onDeleteClick() {
+    // Call Lambda functions to delete file from S3 and metadata from DynamoDB
+    this.contentService.deleteVideo(this.id).subscribe(
+      () => {
+        console.log('Video successfully deleted from S3');
+        alert('Video successfully deleted from S3');
+        
+        this.contentService.removeMetadata(this.id).subscribe(
+          () => {
+            console.log('Metadata successfully deleted from DynamoDB');
+            alert('Metadata successfully deleted from DynamoDB');
+          },
+          (error) => {
+            console.error('Failed to delete metadata from DynamoDB', error);
+            alert('Failed to delete metadata from DynamoDB');
+          }
+        );
+      },
+      (error) => {
+        console.error('Failed to delete video from S3', error);
+        alert('Failed to delete video from S3');
+      }
+    );
   }
 }

@@ -34,8 +34,7 @@ export class CreateContentComponent {
   constructor(
     private contentService: ContentService,
     private cognitoService: CognitoService,
-  ) 
-  {
+  ) {
     this.years = this.generateYears();
   }
 
@@ -83,12 +82,14 @@ export class CreateContentComponent {
       .subscribe(
         () => {
           console.log('Video uploaded successfully');
+          this.showAlert('Video uploaded successfully');
           this.uploadError = null;
           // Reload the page to clear form and show success message
           //setTimeout(() => window.location.reload(), 1000); // Reload after 1 second
         },
         (error) => {
           console.error('Error uploading video:', error);
+          this.showAlert('Error uploading video. Please try again.');
           this.uploadError = 'Error uploading video. Please try again.';
         }
       );
@@ -112,6 +113,10 @@ export class CreateContentComponent {
     // Clear form fields after submission
     form.reset();
     this.videoFile = null;
+  }
+
+  showAlert(message: string): void {
+    alert(message);
   }
 
   generateMediaId(): string {
