@@ -87,6 +87,7 @@ export const handler = async (
           genres: movieResult.Item.genres.split(', '),
           actors: movieResult.Item.actors.split(', '),
           directors: movieResult.Item.directors.split(', '),
+          releaseYear: movieResult.Item.releaseYear,
         };
       } else {
         console.warn(`Movie with ID ${movieId} not found`);
@@ -105,6 +106,6 @@ export const handler = async (
 
   return {
     statusCode: 200,
-    body: JSON.stringify({ movies: filteredMoviesMetadata }),
+    body: JSON.stringify({ items: filteredMoviesMetadata }), // Changed to items for consistency
   };
 };

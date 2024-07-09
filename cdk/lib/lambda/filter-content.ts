@@ -88,10 +88,20 @@ export const handler = async (
             }),
           );
 
+    const items =
+      data.Items?.map((item) => ({
+        movieId: item.movieId,
+        title: item.title,
+        genres: item.genres.split(', '),
+        actors: item.actors.split(', '),
+        directors: item.directors.split(', '),
+        releaseYear: item.releaseYear,
+      })) || [];
+
     return {
       statusCode: 200,
       body: JSON.stringify({
-        items: data.Items,
+        items,
         lastKey: data.LastEvaluatedKey,
       }),
     };

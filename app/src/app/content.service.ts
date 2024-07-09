@@ -41,4 +41,12 @@ export class ContentService {
       { headers },
     );
   }
+
+  deleteVideo(mediaId: string) {
+    return this.http.delete(environment.apiUrl + `/media/${mediaId}/content`);
+  }
+
+  removeMetadata(mediaId: string) {
+    return this.http.delete(environment.apiUrl + `/media/${mediaId}`);
+  }
 }

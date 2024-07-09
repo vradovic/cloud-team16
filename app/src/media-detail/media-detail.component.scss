@@ -4,3 +4,59 @@
   padding: 1em;
   margin-top: 2em;
 }
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #d32f2f;
+  }
+
+  &.btn-small {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  &.btn-large {
+    padding: 12px 24px;
+    font-size: 18px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.edit-btn {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #0e81d6;
+  }
+
+  &.btn-small {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  &.btn-large {
+    padding: 12px 24px;
+    font-size: 18px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
