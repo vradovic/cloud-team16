@@ -8,7 +8,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 const REGION = process.env.REGION!;
-const SUBSCRIPTIONS_TABLE = process.env.SUBSCRIPTIONS_TABLE!;
+const TABLE_NAME = process.env.TABLE_NAME!;
 const UPDATE_FEED_FUNCTION = process.env.UPDATE_FEED_FUNCTION!;
 
 const client = new DynamoDBClient({ region: REGION });
@@ -42,7 +42,7 @@ export const handler = async (
     }
 
     const params: PutCommandInput = {
-      TableName: SUBSCRIPTIONS_TABLE,
+      TableName: TABLE_NAME,
       Item: {
         topic,
         email,

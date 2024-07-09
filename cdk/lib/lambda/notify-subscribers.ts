@@ -47,7 +47,11 @@ const handleMessage = async (message: SQSRecord) => {
     return;
   }
 
-  const topics = [...body.actors, ...body.directors, ...body.genres];
+  const topics = [
+    ...body.actors.split(', '),
+    ...body.directors.split(', '),
+    ...body.genres.split(', '),
+  ];
   const recipients: string[] = [];
 
   for (const topic of topics) {

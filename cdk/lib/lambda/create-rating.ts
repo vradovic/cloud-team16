@@ -8,7 +8,7 @@ import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 const REGION = process.env.REGION!;
-const RATING_TABLE = process.env.RATING_TABLE!;
+const TABLE_NAME = process.env.TABLE_NAME!;
 const UPDATE_FEED_FUNCTION = process.env.UPDATE_FEED_FUNCTION!;
 
 const client = new DynamoDBClient({ region: REGION });
@@ -74,7 +74,7 @@ export const handler = async (
   };
 
   const params: PutCommandInput = {
-    TableName: RATING_TABLE,
+    TableName: TABLE_NAME,
     Item: item,
   };
 
