@@ -8,6 +8,7 @@ import { FormsModule } from '@angular/forms';
 import { ContentService } from '../app/content.service';
 import { FileSaverModule, FileSaverService } from 'ngx-filesaver';
 import { UserFeedService } from '../app/user-feed.service';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-media-detail',
@@ -20,6 +21,7 @@ export class MediaDetailComponent implements OnInit {
   id: string = '';
   metadata?: IMetadata;
   rating = 'none';
+  url?: SafeUrl;
 
   constructor(
     private mediaService: MediaService,
@@ -29,6 +31,7 @@ export class MediaDetailComponent implements OnInit {
     private contentService: ContentService,
     private fileSaverService: FileSaverService,
     private userFeedService: UserFeedService,
+    private sanitizer: DomSanitizer,
   ) {}
 
   ngOnInit() {
@@ -42,6 +45,14 @@ export class MediaDetailComponent implements OnInit {
     this.ratingService.getRating(this.id).subscribe((rating) => {
       console.log(rating);
       this.rating = rating.rating;
+    });
+
+    this.mediaService.getContent(this.id).subscribe((blob) => {
+      const URL = window.URL;
+      this.url = this.sanitizer.bypassSecurityTrustUrl(
+        URL.createObjectURL(blob),
+      );
+      console.log(this.url);
     });
   }
 
