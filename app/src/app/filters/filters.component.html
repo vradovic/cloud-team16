@@ -1,0 +1,62 @@
+<div class="filter-container">
+  <div class="filter-card">
+    <h2>Filter Movies</h2>
+    <form #filterForm="ngForm" (ngSubmit)="submitForm(filterForm)">
+      <div class="form-group">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" ngModel />
+      </div>
+
+      <div class="form-group">
+        <label for="genres">Genres (comma-separated):</label>
+        <input type="text" id="genres" name="genres" ngModel />
+      </div>
+
+      <div class="form-group">
+        <label for="directors">Directors (comma-separated):</label>
+        <input type="text" id="directors" name="directors" ngModel />
+      </div>
+
+      <div class="form-group">
+        <label for="actors">Actors (comma-separated):</label>
+        <input type="text" id="actors" name="actors" ngModel />
+      </div>
+
+      <div class="form-group">
+        <label for="releaseYear">Release Year:</label>
+        <input type="number" id="releaseYear" name="releaseYear" ngModel />
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="clearFilters(filterForm)"
+        >
+          Clear
+        </button>
+      </div>
+
+      <div *ngIf="filterError" class="error-message">
+        {{ filterError }}
+      </div>
+    </form>
+  </div>
+
+  <div *ngIf="results.length > 0" class="results-container">
+    <h2>Results</h2>
+    <div class="movie-card" *ngFor="let movie of results">
+      <div class="movie-details">
+        <p><strong>Title:</strong> {{ movie.title }}</p>
+        <p><strong>Genres:</strong> {{ movie.genres.join(', ') }}</p>
+        <p><strong>Directors:</strong> {{ movie.directors.join(', ') }}</p>
+        <p><strong>Actors:</strong> {{ movie.actors.join(', ') }}</p>
+        <p><strong>Release Year:</strong> {{ movie.releaseYear }}</p>
+      </div>
+      <button class="btn btn-view" (click)="viewMovie(movie.movieId)">
+        View
+      </button>
+    </div>
+  </div>
+</div>

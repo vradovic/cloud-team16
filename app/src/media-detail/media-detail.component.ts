@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { IMetadata } from '../app/model/metadata.model';
 import { MediaService } from '../media.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -7,6 +7,7 @@ import { RatingService } from '../app/rating.service';
 import { FormsModule } from '@angular/forms';
 import { ContentService } from '../app/content.service';
 import { FileSaverModule, FileSaverService } from 'ngx-filesaver';
+import { UserFeedService } from '../app/user-feed.service';
 
 @Component({
   selector: 'app-media-detail',
@@ -27,6 +28,7 @@ export class MediaDetailComponent implements OnInit {
     private router: Router,
     private contentService: ContentService,
     private fileSaverService: FileSaverService,
+    private userFeedService: UserFeedService,
   ) {}
 
   ngOnInit() {
@@ -63,17 +65,27 @@ export class MediaDetailComponent implements OnInit {
       });
   }
 
-
   editContent(mediaId: string) {
     this.router.navigate(['/edit-content', mediaId]);
   }
-  
+
   downloadContent() {
     this.mediaService.getContent(this.id).subscribe((blob) => {
       this.fileSaverService.save(blob, 'download');
+      this.logDownload();
     });
   }
 
+  logDownload() {
+    this.userFeedService.logDownload(this.id).subscribe(
+      (response) => {
+        console.log('Download logged:', response.message);
+      },
+      (error) => {
+        console.error('Failed to log download:', error);
+      },
+    );
+  }
 
   onDeleteClick() {
     // Call Lambda functions to delete file from S3 and metadata from DynamoDB
@@ -81,7 +93,7 @@ export class MediaDetailComponent implements OnInit {
       () => {
         console.log('Video successfully deleted from S3');
         alert('Video successfully deleted from S3');
-        
+
         this.contentService.removeMetadata(this.id).subscribe(
           () => {
             console.log('Metadata successfully deleted from DynamoDB');
@@ -90,13 +102,13 @@ export class MediaDetailComponent implements OnInit {
           (error) => {
             console.error('Failed to delete metadata from DynamoDB', error);
             alert('Failed to delete metadata from DynamoDB');
-          }
+          },
         );
       },
       (error) => {
         console.error('Failed to delete video from S3', error);
         alert('Failed to delete video from S3');
-      }
+      },
     );
   }
 }

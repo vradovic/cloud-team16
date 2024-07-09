@@ -1,9 +1,13 @@
-// src/app/components/edit-content/edit-content.component.ts
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ContentService } from '../content.service';
 import { IMetadata } from '../model/metadata.model';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 
@@ -22,7 +26,7 @@ export class EditContentComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private contentService: ContentService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
   ) {
     this.contentForm = this.fb.group({
       title: [{ value: '', disabled: true }],
@@ -41,36 +45,39 @@ export class EditContentComponent implements OnInit {
 
   ngOnInit(): void {
     this.movieId = this.route.snapshot.paramMap.get('id')!;
-    this.contentService.getMetadata(this.movieId).subscribe((data: IMetadata) => {
-      this.contentForm.patchValue({
-        title: data.title,
-        description: data.description,
-        actors: data.actors.join(', '),
-        directors: data.directors.join(', '),
-        genres: data.genres.join(', '),
-        releaseYear: data.releaseYear,
-        fileType: data.fileType,
-        fileSize: data.fileSize,
-        creationTime: data.creationTime,
-        lastModifiedTime: data.lastModifiedTime,
+    this.contentService
+      .getMetadata(this.movieId)
+      .subscribe((data: IMetadata) => {
+        this.contentForm.patchValue({
+          title: data.title,
+          description: data.description,
+          actors: data.actors.join(', '),
+          directors: data.directors.join(', '),
+          genres: data.genres.join(', '),
+          releaseYear: data.releaseYear,
+          fileType: data.fileType,
+          fileSize: data.fileSize,
+          creationTime: data.creationTime,
+          lastModifiedTime: data.lastModifiedTime,
+        });
       });
-    });
   }
 
-  onFileChange(event: any) {
-    if (event.target.files.length > 0) {
-      this.file = event.target.files[0];
+  onFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.file = input.files[0];
       this.contentForm.patchValue({
-        title: this.file!.name,
-        fileType: this.file!.type,
-        fileSize: this.file!.size,
-        creationTime: new Date(this.file!.lastModified).toISOString(),
+        title: this.file.name,
+        fileType: this.file.type,
+        fileSize: this.file.size,
+        creationTime: new Date(this.file.lastModified).toISOString(),
         lastModifiedTime: new Date().toISOString(),
       });
     }
   }
 
-  onSubmit() {
+  onSubmit(): void {
     if (this.contentForm.valid) {
       const formData = this.contentForm.value;
       const metadata: IMetadata = {
@@ -90,15 +97,17 @@ export class EditContentComponent implements OnInit {
       this.contentService.editMetadata(metadata).subscribe(
         () => {
           if (this.file) {
-            this.contentService.uploadContent(this.movieId, this.file).subscribe(
-              () => alert('Content updated successfully'),
-              (error) => console.error('File upload error:', error)
-            );
+            this.contentService
+              .uploadContent(this.movieId, this.file)
+              .subscribe(
+                () => alert('Content updated successfully'),
+                (error) => console.error('File upload error:', error),
+              );
           } else {
             alert('Content updated successfully');
           }
         },
-        (error) => console.error('Update error:', error)
+        (error) => console.error('Update error:', error),
       );
     }
   }

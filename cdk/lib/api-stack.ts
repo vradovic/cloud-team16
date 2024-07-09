@@ -83,6 +83,7 @@ export class ApiStack extends cdk.Stack {
       },
     );
     props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
+    props.userFeedTable.grantReadWriteData(uploadMetadataFunction);
     newMediaTopic.grantPublish(uploadMetadataFunction);
 
     const deleteMetadataFunction = new NodejsFunction(
@@ -156,6 +157,7 @@ export class ApiStack extends cdk.Stack {
         REGION: this.region,
       },
     });
+
     props.userFeedTable.grantWriteData(updateFeedFunction);
     props.contentMetadataTable.grantReadData(updateFeedFunction);
     props.ratingTable.grantReadData(updateFeedFunction);
@@ -192,6 +194,24 @@ export class ApiStack extends cdk.Stack {
       },
     );
     props.subscriptionsTable.grantWriteData(deleteSubscriptionFunction);
+
+    const logDownloadFunction = new NodejsFunction(
+      this,
+      'LogDownloadFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/post-download-update.ts'),
+        environment: {
+          DOWNLOADS_TABLE: props.downloadsTable.tableName,
+          REGION: this.region,
+          UPDATE_FEED_FUNCTION: updateFeedFunction.functionName,
+        },
+      },
+    );
+
+    props.downloadsTable.grantWriteData(logDownloadFunction);
+
+    const logDownloadIntegration = new LambdaIntegration(logDownloadFunction);
 
     const getUserSubscriptionsFunction = new NodejsFunction(
       this,
@@ -354,6 +374,16 @@ export class ApiStack extends cdk.Stack {
     subscriptionResource.addMethod('GET', getUserSubscriptionsIntegration, {
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
+    });
+
+    const logDownloadResource = api.root.addResource('log-download');
+    const downloadId = logDownloadResource.addResource('{movieId}');
+    downloadId.addMethod('POST', logDownloadIntegration, {
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+      requestParameters: {
+        'method.request.path.downloadId': true,
+      },
     });
 
     const mediaResource = api.root.addResource('media');
@@ -538,18 +568,21 @@ export class ApiStack extends cdk.Stack {
 
     const getUserFeedFunction = new NodejsFunction(
       this,
-      'getUserFeedFunction',
+      'GetUserFeedFunction',
       {
         runtime: Runtime.NODEJS_20_X,
         entry: path.join(__dirname, './lambda/get-user-feed.ts'),
         handler: 'handler',
         environment: {
           USER_FEED_TABLE: props.userFeedTable.tableName,
+          CONTENT_METADATA_TABLE: props.contentMetadataTable.tableName,
           REGION: this.region,
         },
       },
     );
+
     props.userFeedTable.grantReadData(getUserFeedFunction);
+    props.contentMetadataTable.grantReadData(getUserFeedFunction);
 
     const getUserFeedIntegration = new LambdaIntegration(getUserFeedFunction);
 

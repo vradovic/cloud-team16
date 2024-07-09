@@ -8,7 +8,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 const REGION = process.env.REGION!;
-const TABLE_NAME = process.env.TABLE_NAME!;
+const SUBSCRIPTIONS_TABLE = process.env.SUBSCRIPTIONS_TABLE!;
 const UPDATE_FEED_FUNCTION = process.env.UPDATE_FEED_FUNCTION!;
 
 const client = new DynamoDBClient({ region: REGION });
@@ -42,7 +42,7 @@ export const handler = async (
     }
 
     const params: PutCommandInput = {
-      TableName: TABLE_NAME,
+      TableName: SUBSCRIPTIONS_TABLE,
       Item: {
         topic,
         email,
@@ -51,7 +51,7 @@ export const handler = async (
 
     await docClient.send(new PutCommand(params));
 
-    // Poziv funkciji za ažuriranje feeda
+    // Invoke the function to update the feed
     await updateFeed(username, email);
 
     return {

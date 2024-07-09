@@ -5,22 +5,27 @@ import { IMetadata } from './model/metadata.model';
 import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ContentService {
+  constructor(private http: HttpClient) {}
 
-  constructor(private http: HttpClient) { }
-
-  uploadContent(mediaId: string, file: File): Observable<any> {
-
+  uploadContent(mediaId: string, file: File): Observable<unknown> {
     const headers = new HttpHeaders();
     headers.append('Content-Type', 'video/mp4');
 
-    return this.http.post(environment.apiUrl + `/media/${mediaId}/content`, file, { headers });
+    return this.http.post(
+      environment.apiUrl + `/media/${mediaId}/content`,
+      file,
+      { headers },
+    );
   }
 
   uploadMetadata(metadata: IMetadata) {
-    return this.http.post(environment.apiUrl + `/media/${metadata.mediaId}`, metadata);
+    return this.http.post(
+      environment.apiUrl + `/media/${metadata.mediaId}`,
+      metadata,
+    );
   }
 
   getMetadata(mediaId: string): Observable<IMetadata> {
@@ -30,7 +35,11 @@ export class ContentService {
   editMetadata(metadata: IMetadata) {
     const headers = new HttpHeaders();
     headers.append('Content-Type', 'application/json');
-    return this.http.put(environment.apiUrl + `/media/${metadata.mediaId}`, metadata, { headers });
+    return this.http.put(
+      environment.apiUrl + `/media/${metadata.mediaId}`,
+      metadata,
+      { headers },
+    );
   }
 
   deleteVideo(mediaId: string) {
