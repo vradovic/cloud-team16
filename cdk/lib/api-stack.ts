@@ -179,6 +179,7 @@ export class ApiStack extends cdk.Stack {
       },
     );
     props.subscriptionsTable.grantWriteData(createSubscriptionFunction);
+    updateFeedFunction.grantInvoke(createSubscriptionFunction);
 
     const deleteSubscriptionFunction = new NodejsFunction(
       this,
@@ -244,6 +245,7 @@ export class ApiStack extends cdk.Stack {
       },
     );
     props.ratingTable.grantWriteData(createRatingFunction);
+    updateFeedFunction.grantInvoke(createRatingFunction);
 
     const deleteRatingFunction = new NodejsFunction(
       this,
