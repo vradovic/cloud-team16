@@ -83,6 +83,7 @@ export class ApiStack extends cdk.Stack {
       },
     );
     props.contentMetadataTable.grantWriteData(uploadMetadataFunction);
+    props.userFeedTable.grantReadWriteData(uploadMetadataFunction);
     newMediaTopic.grantPublish(uploadMetadataFunction);
 
     const deleteMetadataFunction = new NodejsFunction(
