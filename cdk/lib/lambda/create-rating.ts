@@ -8,7 +8,7 @@ import { APIGatewayEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 
 const REGION = process.env.REGION!;
-const TABLE_NAME = process.env.TABLE_NAME!;
+const RATING_TABLE = process.env.RATING_TABLE!;
 const UPDATE_FEED_FUNCTION = process.env.UPDATE_FEED_FUNCTION!;
 
 const client = new DynamoDBClient({ region: REGION });
@@ -74,7 +74,7 @@ export const handler = async (
   };
 
   const params: PutCommandInput = {
-    TableName: TABLE_NAME,
+    TableName: RATING_TABLE,
     Item: item,
   };
 
@@ -89,7 +89,7 @@ export const handler = async (
     };
   }
 
-  // Poziv funkciji za ažuriranje feeda
+  // Invoke the function to update the feed
   await updateFeed(username, email);
 
   return {

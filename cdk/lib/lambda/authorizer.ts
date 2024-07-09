@@ -25,6 +25,7 @@ const paths: Record<TGroup, RegExp[]> = {
     /(GET|POST|DELETE)\/media\/.+\/rating/,
     /(GET|POST|DELETE)\/subscriptions/,
     /(GET|POST)\/user-feed/,
+    /(POST)\/log-download.*/,
   ],
   admins: [/(GET|POST|PUT|DELETE)\/media.*/],
 };

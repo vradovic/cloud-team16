@@ -7,6 +7,7 @@ import { RatingService } from '../app/rating.service';
 import { FormsModule } from '@angular/forms';
 import { ContentService } from '../app/content.service';
 import { FileSaverModule, FileSaverService } from 'ngx-filesaver';
+import { UserFeedService } from '../app/user-feed.service';
 
 @Component({
   selector: 'app-media-detail',
@@ -27,6 +28,7 @@ export class MediaDetailComponent implements OnInit {
     private router: Router,
     private contentService: ContentService,
     private fileSaverService: FileSaverService,
+    private userFeedService: UserFeedService,
   ) {}
 
   ngOnInit() {
@@ -70,7 +72,19 @@ export class MediaDetailComponent implements OnInit {
   downloadContent() {
     this.mediaService.getContent(this.id).subscribe((blob) => {
       this.fileSaverService.save(blob, 'download');
+      this.logDownload();
     });
+  }
+
+  logDownload() {
+    this.userFeedService.logDownload(this.id).subscribe(
+      (response) => {
+        console.log('Download logged:', response.message);
+      },
+      (error) => {
+        console.error('Failed to log download:', error);
+      },
+    );
   }
 
   onDeleteClick() {

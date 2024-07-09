@@ -194,6 +194,24 @@ export class ApiStack extends cdk.Stack {
     );
     props.subscriptionsTable.grantWriteData(deleteSubscriptionFunction);
 
+    const logDownloadFunction = new NodejsFunction(
+      this,
+      'LogDownloadFunction',
+      {
+        runtime: Runtime.NODEJS_20_X,
+        entry: path.join(__dirname, './lambda/post-download-update.ts'),
+        environment: {
+          DOWNLOADS_TABLE: props.downloadsTable.tableName,
+          REGION: this.region,
+          UPDATE_FEED_FUNCTION: updateFeedFunction.functionName,
+        },
+      },
+    );
+
+    props.downloadsTable.grantWriteData(logDownloadFunction);
+
+    const logDownloadIntegration = new LambdaIntegration(logDownloadFunction);
+
     const getUserSubscriptionsFunction = new NodejsFunction(
       this,
       'getUserSubscriptionsFunction',
@@ -355,6 +373,16 @@ export class ApiStack extends cdk.Stack {
     subscriptionResource.addMethod('GET', getUserSubscriptionsIntegration, {
       authorizer,
       authorizationType: AuthorizationType.CUSTOM,
+    });
+
+    const logDownloadResource = api.root.addResource('log-download');
+    const downloadId = logDownloadResource.addResource('{movieId}');
+    downloadId.addMethod('POST', logDownloadIntegration, {
+      authorizer,
+      authorizationType: AuthorizationType.CUSTOM,
+      requestParameters: {
+        'method.request.path.downloadId': true,
+      },
     });
 
     const mediaResource = api.root.addResource('media');

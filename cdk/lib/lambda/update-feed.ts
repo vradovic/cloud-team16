@@ -4,14 +4,9 @@ import {
   QueryCommand,
   ScanCommand,
   BatchWriteCommand,
-  ScanCommandOutput,
   WriteRequest,
 } from '@aws-sdk/lib-dynamodb';
-import {
-  APIGatewayProxyEvent,
-  APIGatewayProxyResult,
-  APIGatewayProxyHandler,
-} from 'aws-lambda';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 
 const REGION = process.env.REGION!;
 const USER_FEED_TABLE = process.env.USER_FEED_TABLE!;
@@ -39,13 +34,13 @@ interface ContentItem {
   rating?: number;
 }
 
-export const handler: APIGatewayProxyHandler = async (
+export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   console.log('Received event:', JSON.stringify(event, null, 2));
 
-  const username = event.requestContext.authorizer?.username;
-  const email = event.requestContext.authorizer?.email;
+  const username = event.username;
+  const email = event.email;
 
   if (!username || !email) {
     return {
@@ -179,11 +174,10 @@ const rankContent = async (userData: UserData): Promise<ContentItem[]> => {
   const rankedContent: ContentItem[] = [];
 
   try {
-    const contentResult: ScanCommandOutput = await docClient.send(
+    const contentResult = await docClient.send(
       new ScanCommand({ TableName: CONTENT_METADATA_TABLE }),
     );
-    const contentItems: ContentItem[] =
-      (contentResult.Items as ContentItem[]) || [];
+    const contentItems = (contentResult.Items as ContentItem[]) || [];
 
     const ratingMap = new Map<string, string>();
     ratings.forEach((rating) => {
@@ -193,7 +187,6 @@ const rankContent = async (userData: UserData): Promise<ContentItem[]> => {
     const subscriptionTopics = new Set(
       subscriptions.map((subscription) => subscription.topic),
     );
-
     const downloadSet = new Set(downloads.map((download) => download.movie_id));
 
     contentItems.forEach((item) => {
@@ -209,7 +202,6 @@ const rankContent = async (userData: UserData): Promise<ContentItem[]> => {
           .some((director) => subscriptionTopics.has(director));
 
       const isDownloaded = downloadSet.has(item.movieId);
-
       const rating = ratingMap.get(item.movieId);
 
       if (isSubscribed || isDownloaded || rating) {
